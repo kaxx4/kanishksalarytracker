@@ -69,6 +69,27 @@ export default function AttendancePage() {
     return map
   }, [staff, liveAttendance, year, month, days])
 
+  // Resolve the exact cell under the pointer on every move, rather than
+  // relying on each button's own onMouseEnter. A fast drag can skip a small
+  // button's mouseenter entirely (the pointer jumps past it between event
+  // samples), which either leaves gaps or, worse, reads as painting a block
+  // it never actually crossed. Asking the document what's under the cursor
+  // right now is exact regardless of drag speed.
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      if (!paintStatusRef.current) return
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const cell = el?.closest<HTMLElement>('[data-cell]')
+      const key = cell?.dataset.cell
+      if (!key) return
+      const [employeeId, iso] = key.split('|')
+      continuePaint(employeeId, iso, true)
+    }
+    window.addEventListener('pointermove', onPointerMove)
+    return () => window.removeEventListener('pointermove', onPointerMove)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Commit the drag the instant the mouse button is released anywhere on the
   // page — including outside the grid, if the drag ran off its edge.
   useEffect(() => {
@@ -243,6 +264,7 @@ export default function AttendancePage() {
                     return (
                       <td key={d.iso} className="border-b border-rule p-0">
                         <button
+                          data-cell={`${employee.id}|${d.iso}`}
                           onMouseDown={(e) => {
                             e.preventDefault() // don't let the drag select page text
                             startPaint(employee.id, d.iso)

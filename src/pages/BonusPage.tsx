@@ -338,6 +338,55 @@ export default function BonusPage() {
         </Note>
       </div>
 
+      <section className="rise space-y-2" style={{ animationDelay: '85ms' }}>
+        <div className="rubric">
+          <span>How this is calculated</span>
+        </div>
+        <div className="leaf p-5 text-[13px] leading-relaxed text-ink-2">
+          <p>
+            Same layout as <span className="font-medium text-ink">BONUS CALCULATION.xls</span>: one
+            row per employee, one column per financial-year month (April → March), a{' '}
+            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">GROSS</span>{' '}
+            column that sums the twelve, a{' '}
+            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">%</span> rate
+            column, and a{' '}
+            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">BONUS</span>{' '}
+            column — this page just automates filling the twelve monthly cells instead of retyping
+            them from the pay register every year.
+          </p>
+          <ol className="mt-3 list-decimal space-y-1.5 pl-5">
+            <li>
+              <span className="font-medium text-ink">Each month's figure</span> is{' '}
+              <span className="tnum font-mono text-[12px]">payable + P.Tax − tiffin</span> from that
+              month's saved Month End run — the Payment of Bonus Act's definition of bonus-eligible
+              wage (it adds back what P.Tax would otherwise have deducted, and strips the tiffin
+              allowance, which the Act treats as a special allowance rather than wage).
+            </li>
+            <li>
+              <span className="font-medium text-ink">GROSS</span> (this page's "Annual wage") is the
+              sum of those twelve monthly figures. A month with no saved Month End run contributes
+              nothing automatically — its wage has to be added by hand below, the same way a missing
+              month gets filled in on the printed register.
+            </li>
+            <li>
+              <span className="font-medium text-ink">BONUS</span> is{' '}
+              <span className="tnum font-mono text-[12px]">GROSS × rate</span>, rounded per the rule
+              set above. Every financial year in the workbook used a flat{' '}
+              <span className="tnum">16.5%</span> and rounded to the{' '}
+              <span className="font-medium text-ink">nearest</span> rupee — not the always-round-up
+              rule the monthly payroll uses — which is why those are this page's defaults.
+            </li>
+          </ol>
+          <p className="mt-3 text-ink-3">
+            Verified against the workbook to the rupee, e.g. FY2024-25: Dinesh Ram (CT) gross{' '}
+            <span className="tnum">₹1,38,530</span> → bonus <span className="tnum">₹22,857</span>;
+            Surajit Pal (CT) gross <span className="tnum">₹3,69,678</span> → bonus{' '}
+            <span className="tnum">₹60,997</span>; Satinder Rajbanshi (MKCP) gross{' '}
+            <span className="tnum">₹1,57,580</span> → bonus <span className="tnum">₹26,001</span>.
+          </p>
+        </div>
+      </section>
+
       <section className="rise space-y-2" style={{ animationDelay: '90ms' }}>
         <div className="rubric">
           <span>Bonus computation</span>
