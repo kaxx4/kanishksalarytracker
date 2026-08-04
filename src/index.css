@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  "Bahi-khata" — the bound accounting register.
+
+  Warm paper stock, ink-black text, ruled rows, monospace numerals. Vermillion
+  is reserved: totals, absences, stamps and destructive edges. It never appears
+  decoratively, so when it does appear it means something.
+*/
+
+@layer base {
+  :root {
+    --paper: #f6f2e9;
+    --paper-raised: #fdfbf6;
+    --rule: #dad1be;
+    --ink: #14120e;
+    --vermillion: #b23a25;
+
+    /* Ledger paper grain — a single tiling turbulence, kept very faint. */
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink;
+    font-size: 15px;
+  }
+
+  /* Grain sits above the background, below everything else. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--grain);
+    opacity: 0.035;
+    mix-blend-mode: multiply;
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Numerals are always mono and always tabular, so columns align. */
+  .tnum,
+  input[type='number'],
+  input[type='date'] {
+    font-family: theme('fontFamily.mono');
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  ::selection {
+    background: theme('colors.vermillion.wash');
+    color: theme('colors.vermillion.deep');
+  }
+
+  :focus-visible {
+    outline: 2px solid theme('colors.vermillion.DEFAULT');
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme('colors.paper.sunk');
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.rule.strong');
+    border: 3px solid theme('colors.paper.sunk');
+    border-radius: 99px;
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------ surfaces */
+
+  /* A leaf of the ledger: paper with a hairline edge and a printed drop. */
+  .leaf {
+    @apply rounded-sm border border-paper-edge bg-paper-raised shadow-leaf;
+  }
+
+  /* Section heading: small caps over a rule, as in a ruled account book. */
+  .rubric {
+    @apply flex items-baseline gap-3 border-b border-rule pb-1.5 font-mono
+           text-[11px] font-medium uppercase tracking-stamp text-ink-3;
+  }
+
+  /* ------------------------------------------------------------- stamps */
+
+  /*
+    Rubber stamp. Double-ruled via an inset ring, rotated off-axis and slightly
+    transparent, the way a real stamp sits on a page.
+  */
+  .stamp {
+    @apply inline-flex items-center rounded-[2px] border-2 px-2 py-0.5 font-mono
+           text-[10px] font-semibold uppercase tracking-stamp;
+    box-shadow: inset 0 0 0 1px currentColor;
+    transform: rotate(-4deg);
+    opacity: 0.9;
+  }
+  .stamp-approved {
+    @apply stamp border-verdigris text-verdigris;
+  }
+  .stamp-draft {
+    @apply stamp border-ochre text-ochre;
+  }
+  .stamp-void {
+    @apply stamp border-ink-4 text-ink-4;
+  }
+
+  /* Flat label, no rotation — for inline metadata. */
+  .tag {
+    @apply inline-flex items-center rounded-[2px] px-1.5 py-0.5 font-mono
+           text-[10px] font-medium uppercase tracking-[.12em];
+  }
+
+  /* ------------------------------------------------------------ controls */
+
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-[3px] border px-3 py-1.5
+           font-mono text-[11px] font-medium uppercase tracking-[.1em]
+           transition-all duration-150
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn border-ink bg-ink text-paper-raised
+           hover:border-vermillion hover:bg-vermillion;
+  }
+  .btn-secondary {
+    @apply btn border-rule-strong bg-paper-raised text-ink-2
+           hover:border-ink hover:text-ink;
+  }
+  .btn-ghost {
+    @apply btn border-transparent text-ink-3 hover:border-rule-strong hover:text-ink;
+  }
+
+  .input {
+    @apply w-full rounded-[3px] border border-rule-strong bg-paper-raised px-2.5 py-1.5
+           text-sm text-ink outline-none transition-colors
+           placeholder:text-ink-4 focus:border-vermillion;
+  }
+
+  .label {
+    @apply mb-1 block font-mono text-[10px] font-medium uppercase tracking-stamp text-ink-3;
+  }
+
+  /* --------------------------------------------------------------- table */
+
+  /* Column heads sit under a strong rule, like a ledger's ruled header. */
+  .th {
+    @apply whitespace-nowrap border-b border-rule-strong px-3 py-2 text-left
+           font-mono text-[10px] font-medium uppercase tracking-[.13em] text-ink-3;
+  }
+
+  /* Every row is a ruled line. */
+  .td {
+    @apply whitespace-nowrap border-b border-rule px-3 py-2 text-sm;
+  }
+
+  /* Accounting convention: a double rule above the total. */
+  .rule-total {
+    border-top: 3px double theme('colors.rule.strong');
+  }
+
+  /* ------------------------------------------------------------- motion */
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* One orchestrated entrance on load, staggered by row. */
+  .rise {
+    animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      animation: none;
+    }
+    .stamp {
+      transform: none;
+    }
+    * {
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Ruled-off columns — weekly offs and holidays in the attendance grid. */
+  .hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      theme('colors.rule.DEFAULT') 3px,
+      theme('colors.rule.DEFAULT') 4px
+    );
+  }
+}
