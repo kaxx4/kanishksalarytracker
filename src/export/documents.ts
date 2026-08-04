@@ -6,8 +6,9 @@
  * letter reproduces the layout of the existing SALARY LETTERS.xlsx letterhead.
  */
 import { amountInWords, inr, letterDate, rupees } from '../lib/format.ts'
+import { fyLabel } from '../calc/bonus.ts'
 import { MONTH_NAMES } from '../types.ts'
-import type { Company, RunLine } from '../types.ts'
+import type { BonusRunLine, Company, RunLine } from '../types.ts'
 
 export interface LetterData {
   company: Company
@@ -49,6 +50,13 @@ const PRINT_CSS = `
   .muted { color: #444; font-size: 9.5pt; }
   .net { border-top: 1.5px solid #000; margin-top: 10px; padding-top: 8px;
          display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
+  .bn { font-family: "Noto Sans Bengali", "Nirmala UI", "Vrinda", sans-serif; }
+  .formm-head { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; }
+  .formm-head .en { font-size: 16pt; font-weight: bold; letter-spacing: .5px; }
+  .formm-head .bn { font-size: 15pt; font-weight: bold; }
+  .formm-head .sub { font-size: 10pt; font-weight: normal; margin-top: 2px; }
+  .formm .doc-title .bn { font-size: 12pt; }
+  .formm-cert { margin-top: 20px; font-size: 10.5pt; }
 `
 
 function esc(value: unknown): string {
@@ -175,6 +183,58 @@ export function renderSummary({
   </div>`
 }
 
+export interface BonusSummaryData {
+  company: Company
+  fyStartYear: number
+  rate: number
+  lines: BonusRunLine[]
+}
+
+/** The bonus computation sheet — one row per employee, print-formatted. */
+export function renderBonusSummary({ company, fyStartYear, rate, lines }: BonusSummaryData): string {
+  const paid = lines.filter((l) => l.pay_mode !== 'excluded')
+  const totals = {
+    annualWage: sum(paid.map((l) => l.annual_wage)),
+    rounded: sum(paid.map((l) => l.rounded)),
+  }
+
+  const body = lines
+    .map(
+      (l, i) => `
+      <tr>
+        <td class="num">${i + 1}</td>
+        <td>${esc(l.employee_name)}${l.pay_mode !== 'neft' ? ` <span class="muted">(${esc(l.pay_mode)})</span>` : ''}</td>
+        <td class="num">${l.months_counted}</td>
+        <td class="num">${inr(l.annual_wage, { paise: true })}</td>
+        <td class="num"><strong>${inr(l.rounded)}</strong></td>
+      </tr>`,
+    )
+    .join('')
+
+  return `
+  <div class="sheet">
+    ${letterhead(company)}
+    <h2 class="doc-title">Bonus Statement — ${esc(fyLabel(fyStartYear))}</h2>
+    <div class="sub">Bonus rate ${(rate * 100).toFixed(2)}% of annual bonus-eligible wage</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th><th>Name</th><th class="num">Months</th>
+          <th class="num">Annual Wage</th><th class="num">Bonus</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total (${paid.length} paid)</td>
+          <td class="num">${inr(totals.annualWage, { paise: true })}</td>
+          <td class="num">${inr(totals.rounded)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>`
+}
+
 export interface PayslipData {
   company: Company
   year: number
@@ -228,6 +288,81 @@ export function renderPayslip({ company, year, month, workingDays, line }: Paysl
     </div>`
 }
 
+export interface FormMData {
+  company: Company
+  year: number
+  month: number
+  lines: RunLine[]
+}
+
+/**
+ * Form M (West Bengal Shops & Establishments Rules, Rule 30) — the statutory
+ * pay register. The revenue-stamp cell and both signature areas are left
+ * blank on purpose: they get filled in by hand or physically stamped after
+ * printing, never rendered here.
+ */
+export function renderFormM({ company, year, month, lines }: FormMData): string {
+  const paid = lines.filter((l) => l.pay_mode !== 'excluded')
+
+  const body = paid
+    .map(
+      (l, i) => `
+      <tr>
+        <td class="num">${i + 1}</td>
+        <td>${esc(l.employee_name)}</td>
+        <td class="num">${inr(l.monthly_pay)}</td>
+        <td class="num">—</td>
+        <td>${l.advance || l.tds ? esc(deductionNote(l)) : '—'}</td>
+        <td class="num"><strong>${inr(l.rounded)}</strong></td>
+        <td></td>
+        <td></td>
+      </tr>`,
+    )
+    .join('')
+
+  return `
+  <div class="sheet formm">
+    <div class="formm-head">
+      <div class="bn">ফরম &apos;এম&apos;</div>
+      <div class="en">FORM &apos;M&apos;</div>
+      <div class="bn sub">৩০ বিধি দ্রষ্টব্য</div>
+      <div class="en sub">[See Rule 30]</div>
+    </div>
+    <h2 class="doc-title">
+      <span class="bn">বেতনের হিসাব বহি</span><br/>
+      PAY REGISTER
+    </h2>
+    <div class="sub">
+      ${esc(company.name)} — ${esc(MONTH_NAMES[month - 1])} ${year}
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Name of Persons employed</th>
+          <th class="num">Rate of wages</th>
+          <th class="num">Additional wages for overtime</th>
+          <th>Deductions if any and reasons therefor</th>
+          <th class="num">Total amount paid as wages</th>
+          <th>Revenue Stamp</th>
+          <th>Signature of the persons employee</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">Remarks: ____________________________________________________</p>
+    <div class="formm-cert">
+      <p>Certified that the above register correctly records the wages paid to the persons named
+      above for the month of ${esc(MONTH_NAMES[month - 1])} ${year}.</p>
+      <div class="row" style="margin-top:40px">
+        <div>Witness: ______________________</div>
+        <div>Date: ______________________</div>
+      </div>
+      <div class="sign">Signature of Employer</div>
+    </div>
+  </div>`
+}
+
 export function renderPayslipSheets(slips: PayslipData[]): string {
   const pages: string[] = []
   for (let i = 0; i < slips.length; i += 2) {
@@ -255,4 +390,11 @@ export function printHtml(title: string, bodyHtml: string): void {
 
 function sum(values: number[]): number {
   return values.reduce((a, b) => a + b, 0)
+}
+
+function deductionNote(line: RunLine): string {
+  const parts: string[] = []
+  if (line.advance) parts.push(`Advance ${rupees(line.advance)}`)
+  if (line.tds) parts.push(`TDS ${rupees(line.tds)}`)
+  return parts.join(', ')
 }

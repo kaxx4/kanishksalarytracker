@@ -1,5 +1,31 @@
 # Session Handoff — Salary Tracker
 
+## Update (next session, same day)
+
+All items in "What's still open" below were implemented and committed:
+- Bonus feature: schema (`0005_salary_bonus.sql`), engine (`src/calc/bonus.ts`,
+  pinned against the FY2024-25 reference figures below), and a Bonus tab
+  (`src/pages/BonusPage.tsx`). Verified end-to-end in the browser for both
+  companies and via a real save/delete round-trip against the live DB.
+  Deviation from the original per-month-grid idea: the UI shows one row per
+  employee (months found / auto wage / manual add-on / annual wage / bonus)
+  rather than 12 editable month columns — simpler to use, same auto-pull +
+  manual-entry behaviour the plan asked for.
+- CT May 2026 and MKCP June 2026 imported as historical runs, matching the
+  register totals cited below exactly.
+- Every calc setting (including the new bonus rate/round-rule) confirmed
+  editable and synced — `salary_bonus_*` tables added to `SYNCED_TABLES`.
+- UI softened: vermillion pulled back to real errors/destructive actions only
+  (offline lamp, failed-save toasts, "Clear month"); verdigris now carries
+  active-tab state, focus rings, selection, and routine totals.
+- Form M pay register added (`renderFormM` in `documents.ts`, wired into
+  Month End and History). Built from the textual spec below, not the actual
+  WhatsApp photos — that zip wasn't present in `Downloads` this session
+  (`BONUS CALCULATION.xls` was also missing; the bonus formula was instead
+  pinned directly against the reference figures already written out below).
+  Worth a visual check against the original photos if they turn up again.
+
+
 Written mid-task so a fresh session (or agent) can pick up exactly where this
 one stopped. Read this before touching anything — several items below aren't
 in the code yet and would otherwise get silently dropped or re-derived badly.

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { computeMonth, type CompanySettings, type LineInput } from '../calc/payroll.ts'
 import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
 import { downloadNeftCsv, downloadNeftXls, neftFileName } from '../export/neftFile.ts'
-import { printHtml, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
+import { printHtml, renderFormM, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
 import { inr, rupees, todayIso } from '../lib/format.ts'
 import { buildMonthDays, currentMonth, monthOptions } from '../lib/month.ts'
 import { supabase } from '../lib/supabase.ts'
@@ -263,7 +263,7 @@ export default function RunPage() {
             <div className="font-mono text-[10px] uppercase tracking-stamp text-ink-3">
               Payable to bank
             </div>
-            <div className="tnum mt-1 text-[3.4rem] font-medium leading-[1] text-vermillion">
+            <div className="tnum mt-1 text-[3.4rem] font-medium leading-[1] text-ink">
               ₹{inr(result.totals.neftTotal)}
             </div>
             <div className="mt-2 font-mono text-[11px] text-ink-3">
@@ -456,7 +456,7 @@ export default function RunPage() {
                 <td className="td tnum border-b-0 text-right">{inr(result.totals.ptax)}</td>
                 <td className="td tnum border-b-0 text-right">{inr(result.totals.tds)}</td>
                 <td className="td tnum border-b-0 text-right">{inr(result.totals.advance)}</td>
-                <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-vermillion">
+                <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink">
                   {inr(result.totals.grandTotal)}
                 </td>
                 <td className="td border-b-0" />
@@ -611,6 +611,18 @@ export default function RunPage() {
             }
           >
             Pay slips
+          </button>
+
+          <button
+            className="btn-secondary"
+            onClick={() =>
+              printHtml(
+                `Pay Register ${MONTH_NAMES[month - 1]} ${year}`,
+                renderFormM({ company, year, month, lines: asRunLines() }),
+              )
+            }
+          >
+            Pay register
           </button>
 
           <span className="mx-1 h-5 w-px bg-rule" />

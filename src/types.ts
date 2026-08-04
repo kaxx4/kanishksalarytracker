@@ -116,6 +116,49 @@ export interface NeftRowRecord {
   amount: number
 }
 
+export interface BonusSettings {
+  id: string
+  company_id: string
+  fy_start_year: number
+  rate: number
+  round_rule: RoundRule
+}
+
+export interface BonusRun {
+  id: string
+  company_id: string
+  fy_start_year: number
+  status: 'draft' | 'approved'
+  rate: number
+  round_rule: RoundRule
+  cheque_no: string | null
+  letter_date: string | null
+  value_date: string | null
+  neft_total: number
+  cash_total: number
+  grand_total: number
+  is_historical: boolean
+  notes: string | null
+  approved_at: string | null
+}
+
+export interface BonusRunLine {
+  id: string
+  run_id: string
+  employee_id: string | null
+  employee_name: string
+  beneficiary_name: string
+  bank_ifsc: string | null
+  bank_account_no: string | null
+  bank_account_type: string
+  annual_wage: number
+  months_counted: number
+  bonus_amount: number
+  rounded: number
+  pay_mode: PayMode
+  sort_order: number
+}
+
 /** Editable per-employee inputs for a month being prepared. */
 export interface DraftEntry {
   employeeId: string

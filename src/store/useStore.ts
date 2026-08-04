@@ -7,6 +7,7 @@ import { toast } from './useToast.ts'
 import type {
   AttendanceMark,
   AttendanceStatus,
+  BonusRun,
   Company,
   Employee,
   Holiday,
@@ -30,6 +31,10 @@ const SYNCED_TABLES = [
   'salary_runs',
   'salary_run_lines',
   'salary_neft_rows',
+  'salary_bonus_settings',
+  'salary_bonus_runs',
+  'salary_bonus_lines',
+  'salary_bonus_neft_rows',
 ] as const
 
 export type SyncState = 'connecting' | 'live' | 'offline'
@@ -48,6 +53,7 @@ interface StoreState {
   employees: Employee[]
   holidays: Holiday[]
   runs: Run[]
+  bonusRuns: BonusRun[]
 
   /** Attendance for the month currently open, keyed `${employeeId}|${iso}`. */
   attendance: Record<string, AttendanceStatus>
@@ -69,6 +75,9 @@ interface StoreState {
   loadRunDetail: (runId: string) => Promise<{ run: Run; lines: RunLine[]; neft: NeftRowRecord[] }>
   deleteRun: (runId: string) => Promise<void>
   refreshRuns: () => Promise<void>
+
+  deleteBonusRun: (runId: string) => Promise<void>
+  refreshBonusRuns: () => Promise<void>
 }
 
 const key = (employeeId: string, iso: string) => `${employeeId}|${iso}`
@@ -85,6 +94,7 @@ export const useStore = create<StoreState>((set, get) => ({
   employees: [],
   holidays: [],
   runs: [],
+  bonusRuns: [],
   attendance: {},
   attendanceMonth: null,
 
@@ -116,7 +126,7 @@ export const useStore = create<StoreState>((set, get) => ({
         return
       }
 
-      const [employees, holidays, runs] = await Promise.all([
+      const [employees, holidays, runs, bonusRuns] = await Promise.all([
         supabase.from('salary_employees').select('*').eq('company_id', activeId).order('sort_order'),
         supabase.from('salary_holidays').select('*'),
         supabase
@@ -125,10 +135,16 @@ export const useStore = create<StoreState>((set, get) => ({
           .eq('company_id', activeId)
           .order('year', { ascending: false })
           .order('month', { ascending: false }),
+        supabase
+          .from('salary_bonus_runs')
+          .select('*')
+          .eq('company_id', activeId)
+          .order('fy_start_year', { ascending: false }),
       ])
 
       if (employees.error) throw employees.error
       if (runs.error) throw runs.error
+      if (bonusRuns.error) throw bonusRuns.error
 
       set({
         companies: list,
@@ -136,6 +152,7 @@ export const useStore = create<StoreState>((set, get) => ({
         employees: (employees.data ?? []) as Employee[],
         holidays: (holidays.data ?? []) as Holiday[],
         runs: (runs.data ?? []) as Run[],
+        bonusRuns: (bonusRuns.data ?? []) as BonusRun[],
         loading: false,
         lastSyncAt: new Date().toISOString(),
       })
@@ -329,6 +346,29 @@ export const useStore = create<StoreState>((set, get) => ({
       .order('month', { ascending: false })
     if (error) set({ error: error.message })
     else set({ runs: (data ?? []) as Run[] })
+  },
+
+  async deleteBonusRun(runId) {
+    const { error } = await supabase.from('salary_bonus_runs').delete().eq('id', runId)
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not delete: ${error.message}`)
+    } else {
+      await get().refreshBonusRuns()
+      toast.ok('Deleted')
+    }
+  },
+
+  async refreshBonusRuns() {
+    const id = get().activeCompanyId
+    if (!id) return
+    const { data, error } = await supabase
+      .from('salary_bonus_runs')
+      .select('*')
+      .eq('company_id', id)
+      .order('fy_start_year', { ascending: false })
+    if (error) set({ error: error.message })
+    else set({ bonusRuns: (data ?? []) as BonusRun[] })
   },
 }))
 

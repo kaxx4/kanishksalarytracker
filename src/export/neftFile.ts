@@ -121,6 +121,10 @@ export function neftFileName(company: Company, year: number, month: number): str
   return `${company.code} Bulk NEFT_NON_HDFC_format ${year}-${mm}`
 }
 
+export function bonusNeftFileName(company: Company, fyStartYear: number): string {
+  return `${company.code} Bulk NEFT_NON_HDFC_format BONUS FY${fyStartYear}-${String(fyStartYear + 1).slice(2)}`
+}
+
 /** Writes a real BIFF8 .xls, matching the format the bank template uses. */
 export function downloadNeftXls(options: NeftFileOptions, fileName: string): void {
   XLSX.writeFile(buildNeftWorkbook(options), `${fileName}.xls`, { bookType: 'biff8' })

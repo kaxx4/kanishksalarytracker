@@ -3,19 +3,21 @@ import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore.ts'
 import { useToast } from './store/useToast.ts'
 import AttendancePage from './pages/AttendancePage.tsx'
+import BonusPage from './pages/BonusPage.tsx'
 import EmployeesPage from './pages/EmployeesPage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
 import RunPage from './pages/RunPage.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
 
-type Tab = 'attendance' | 'run' | 'history' | 'employees' | 'settings'
+type Tab = 'attendance' | 'run' | 'bonus' | 'history' | 'employees' | 'settings'
 
 const TABS: { id: Tab; label: string; folio: string }[] = [
   { id: 'attendance', label: 'Attendance', folio: 'I' },
   { id: 'run', label: 'Month End', folio: 'II' },
-  { id: 'history', label: 'History', folio: 'III' },
-  { id: 'employees', label: 'Employees', folio: 'IV' },
-  { id: 'settings', label: 'Settings', folio: 'V' },
+  { id: 'bonus', label: 'Bonus', folio: 'III' },
+  { id: 'history', label: 'History', folio: 'IV' },
+  { id: 'employees', label: 'Employees', folio: 'V' },
+  { id: 'settings', label: 'Settings', folio: 'VI' },
 ]
 
 export default function App() {
@@ -36,6 +38,7 @@ export default function App() {
       <main className="mx-auto max-w-[1440px] px-6 py-7">
         {tab === 'attendance' && <AttendancePage />}
         {tab === 'run' && <RunPage />}
+        {tab === 'bonus' && <BonusPage />}
         {tab === 'history' && <HistoryPage />}
         {tab === 'employees' && <EmployeesPage />}
         {tab === 'settings' && <SettingsPage />}
@@ -102,7 +105,7 @@ function Masthead() {
     <header className="mx-auto max-w-[1440px] px-6 pt-7">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="rise">
-          <div className="font-mono text-[10px] uppercase tracking-stamp text-vermillion">
+          <div className="font-mono text-[10px] uppercase tracking-stamp text-verdigris">
             Salary&nbsp;Register
           </div>
           <h1 className="mt-1.5 font-display text-[2.6rem] leading-[1.05] tracking-[-0.015em]">
@@ -192,11 +195,11 @@ function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
                   active ? 'text-ink' : 'text-ink-3 hover:text-ink-2'
                 }`}
             >
-              <span className={active ? 'text-vermillion' : 'text-ink-4'}>{folio}</span>
+              <span className={active ? 'text-verdigris' : 'text-ink-4'}>{folio}</span>
               {label}
               <span
                 className={`absolute inset-x-0 -bottom-px h-[2px] transition-transform duration-200 ${
-                  active ? 'scale-x-100 bg-vermillion' : 'scale-x-0 bg-rule-strong'
+                  active ? 'scale-x-100 bg-verdigris' : 'scale-x-0 bg-rule-strong'
                 } group-hover:scale-x-100`}
               />
             </button>

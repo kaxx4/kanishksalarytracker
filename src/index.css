@@ -6,8 +6,10 @@
   "Bahi-khata" — the bound accounting register.
 
   Warm paper stock, ink-black text, ruled rows, monospace numerals. Vermillion
-  is reserved: totals, absences, stamps and destructive edges. It never appears
-  decoratively, so when it does appear it means something.
+  is reserved for real errors and destructive actions — offline status, a
+  failed save, "Clear month". Verdigris carries the calmer job of everyday
+  active/selected states and totals, so vermillion still means something when
+  it appears.
 */
 
 @layer base {
@@ -59,12 +61,12 @@
   }
 
   ::selection {
-    background: theme('colors.vermillion.wash');
-    color: theme('colors.vermillion.deep');
+    background: theme('colors.verdigris.wash');
+    color: theme('colors.ink.DEFAULT');
   }
 
   :focus-visible {
-    outline: 2px solid theme('colors.vermillion.DEFAULT');
+    outline: 2px solid theme('colors.verdigris.DEFAULT');
     outline-offset: 2px;
   }
 
@@ -135,7 +137,7 @@
   }
   .btn-primary {
     @apply btn border-ink bg-ink text-paper-raised
-           hover:border-vermillion hover:bg-vermillion;
+           hover:border-verdigris hover:bg-verdigris;
   }
   .btn-secondary {
     @apply btn border-rule-strong bg-paper-raised text-ink-2
@@ -148,7 +150,7 @@
   .input {
     @apply w-full rounded-[3px] border border-rule-strong bg-paper-raised px-2.5 py-1.5
            text-sm text-ink outline-none transition-colors
-           placeholder:text-ink-4 focus:border-vermillion;
+           placeholder:text-ink-4 focus:border-verdigris;
   }
 
   .label {

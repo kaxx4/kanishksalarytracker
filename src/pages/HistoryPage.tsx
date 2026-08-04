@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { downloadNeftXls, neftFileName } from '../export/neftFile.ts'
-import { printHtml, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
+import { printHtml, renderFormM, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
 import { inr } from '../lib/format.ts'
 import { useStore } from '../store/useStore.ts'
 import { MONTH_NAMES } from '../types.ts'
@@ -60,7 +60,7 @@ export default function HistoryPage() {
                 >
                   <span
                     className={`h-full w-[3px] self-stretch ${
-                      active ? 'bg-vermillion' : 'bg-transparent'
+                      active ? 'bg-verdigris' : 'bg-transparent'
                     }`}
                   />
                   <span className="flex-1">
@@ -176,6 +176,22 @@ export default function HistoryPage() {
                   Pay slips
                 </button>
                 <button
+                  className="btn-secondary"
+                  onClick={() =>
+                    printHtml(
+                      'Pay Register (Form M)',
+                      renderFormM({
+                        company,
+                        year: detail.run.year,
+                        month: detail.run.month,
+                        lines: detail.lines,
+                      }),
+                    )
+                  }
+                >
+                  Pay register
+                </button>
+                <button
                   className="btn-primary"
                   disabled={detail.neft.length === 0}
                   onClick={() => {
@@ -276,7 +292,7 @@ export default function HistoryPage() {
                       >
                         Transferred to bank
                       </td>
-                      <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-vermillion">
+                      <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink">
                         {inr(detail.run.neft_total)}
                       </td>
                     </tr>
