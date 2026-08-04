@@ -51,12 +51,21 @@ const PRINT_CSS = `
   .net { border-top: 1.5px solid #000; margin-top: 10px; padding-top: 8px;
          display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
   .bn { font-family: "Noto Sans Bengali", "Nirmala UI", "Vrinda", sans-serif; }
-  .formm-head { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; }
-  .formm-head .en { font-size: 16pt; font-weight: bold; letter-spacing: .5px; }
-  .formm-head .bn { font-size: 15pt; font-weight: bold; }
-  .formm-head .sub { font-size: 10pt; font-weight: normal; margin-top: 2px; }
-  .formm .doc-title .bn { font-size: 12pt; }
-  .formm-cert { margin-top: 20px; font-size: 10.5pt; }
+  .formm-title { text-align: center; margin-bottom: 10px; }
+  .formm-title .en { font-size: 18pt; font-weight: bold; letter-spacing: .5px; }
+  .formm-title .bn { font-size: 15pt; font-weight: bold; }
+  .formm-title .rule { font-size: 10pt; font-weight: normal; margin-top: 1px; }
+  .formm-fields { margin-bottom: 12px; font-size: 10.5pt; }
+  .formm-fields .field { display: flex; gap: 6px; margin: 3px 0; align-items: baseline; }
+  .formm-fields .label { flex: 0 0 auto; white-space: nowrap; }
+  .formm-fields .label .bn { font-size: 9pt; display: block; color: #333; }
+  .formm-fields .value { flex: 1; border-bottom: 1px solid #000; min-height: 14px; padding: 0 4px; }
+  .formm table td, .formm table th { border: 1px solid #000; padding: 4px 5px; font-size: 8.5pt; }
+  .formm .serial { font-weight: bold; margin-right: 3px; }
+  .formm-cert { margin-top: 14px; font-size: 10pt; }
+  .formm-cert .totals { text-align: right; margin: 10px 0; font-size: 10.5pt; }
+  .formm-cert .totals div { margin: 2px 0; }
+  .formm-note { font-size: 8pt; color: #444; margin-top: 16px; }
 `
 
 function esc(value: unknown): string {
@@ -297,69 +306,112 @@ export interface FormMData {
 
 /**
  * Form M (West Bengal Shops & Establishments Rules, Rule 30) — the statutory
- * pay register. The revenue-stamp cell and both signature areas are left
- * blank on purpose: they get filled in by hand or physically stamped after
- * printing, never rendered here.
+ * pay register, laid out to match the physical register the company already
+ * files (bilingual title block, field rows, seven-column table with the
+ * "Additional wages" column carrying the AS-/AD- absence/advance shorthand
+ * and "Remarks" carrying the P.Tax figure, exactly as the real book does).
+ * The revenue-stamp cell and both signature areas are left blank on purpose:
+ * they get filled in by hand or physically stamped after printing, never
+ * rendered here. "Registration No." and the employer's personal name are
+ * also left blank — neither is data this app stores.
  */
 export function renderFormM({ company, year, month, lines }: FormMData): string {
   const paid = lines.filter((l) => l.pay_mode !== 'excluded')
+  const salaryTotal = sum(paid.map((l) => l.rounded))
+  const ptaxTotal = sum(paid.map((l) => l.ptax))
+
+  const additionalWages = (l: RunLine): string => {
+    const parts = [`AS-${l.absence || 'NIL'}`]
+    if (l.advance) parts.push(`AD-${inr(l.advance)}`)
+    return parts.join('<br/>')
+  }
 
   const body = paid
     .map(
       (l, i) => `
       <tr>
-        <td class="num">${i + 1}</td>
-        <td>${esc(l.employee_name)}</td>
+        <td><span class="serial">${i + 1})</span>${esc(l.employee_name)}</td>
         <td class="num">${inr(l.monthly_pay)}</td>
-        <td class="num">—</td>
-        <td>${l.advance || l.tds ? esc(deductionNote(l)) : '—'}</td>
+        <td class="num">${additionalWages(l)}</td>
+        <td>${l.tds ? esc(deductionNote(l)) : '—'}</td>
         <td class="num"><strong>${inr(l.rounded)}</strong></td>
         <td></td>
-        <td></td>
+        <td class="num">${inr(l.ptax)}</td>
       </tr>`,
     )
     .join('')
 
+  const field = (en: string, bn: string, value: string) => `
+    <div class="field">
+      <span class="label">${esc(en)}<span class="bn">${bn}</span></span>
+      <span class="value">${esc(value)}</span>
+    </div>`
+
   return `
   <div class="sheet formm">
-    <div class="formm-head">
-      <div class="bn">ফরম &apos;এম&apos;</div>
-      <div class="en">FORM &apos;M&apos;</div>
-      <div class="bn sub">৩০ বিধি দ্রষ্টব্য</div>
-      <div class="en sub">[See Rule 30]</div>
+    <div class="formm-title">
+      <div class="en">PAY REGISTER</div>
+      <div class="bn">বেতনের হিসাব বহি</div>
+      <div class="rule">Form M (ফরম এম) &nbsp;[See Rule 30 / ৩০ বিধি দ্রষ্টব্য]</div>
     </div>
-    <h2 class="doc-title">
-      <span class="bn">বেতনের হিসাব বহি</span><br/>
-      PAY REGISTER
-    </h2>
-    <div class="sub">
-      ${esc(company.name)} — ${esc(MONTH_NAMES[month - 1])} ${year}
+
+    <div class="formm-fields">
+      ${field('Name of Shop/Establishment', 'দোকানের / সংস্থার নাম', company.name)}
+      ${field('Name of Employer/Shop-keeper', 'দোকানের / মালিক / নিয়োগকর্তার নাম', '')}
+      ${field('Address in Full', 'পূর্ণ ঠিকানা', company.address_line ?? '')}
+      ${field('Registration No.', 'রেজিস্ট্রেশন নং', '')}
+      ${field(
+        'Day/week/month (in accordance with mode of payment) and year',
+        'দিন / সপ্তাহ / মাস (মাহিনা দেওয়ার নিয়মানুযায়ী) এবং সন',
+        `Month of ${MONTH_NAMES[month - 1]}, ${year}.`,
+      )}
     </div>
+
     <table>
       <thead>
         <tr>
-          <th class="num">#</th>
-          <th>Name of Persons employed</th>
-          <th class="num">Rate of wages</th>
-          <th class="num">Additional wages for overtime</th>
-          <th>Deductions if any and reasons therefor</th>
-          <th class="num">Total amount paid as wages</th>
-          <th>Revenue Stamp</th>
-          <th>Signature of the persons employee</th>
+          <th>Name of Persons<br/>employed<span class="bn" style="display:block">কর্মচারীগণের নাম</span></th>
+          <th class="num">Rate of wages<br/>(per month/<br/>week or day)<span class="bn" style="display:block">বেতনের হার</span></th>
+          <th class="num">Additional wages<br/>for overtime<span class="bn" style="display:block">অতিরিক্ত বেতন</span></th>
+          <th>Deductions if any<br/>and reasons therefor<span class="bn" style="display:block">বেতন কাটা হইলে কারণ</span></th>
+          <th class="num">Total amount<br/>paid as wages<span class="bn" style="display:block">মোট প্রদত্ত টাকা</span></th>
+          <th>Signature of the<br/>persons employee<span class="bn" style="display:block">কর্মচারীর সহি</span></th>
+          <th class="num">Remarks<br/>(P.Tax)<span class="bn" style="display:block">মন্তব্য</span></th>
         </tr>
       </thead>
       <tbody>${body}</tbody>
     </table>
-    <p class="muted" style="margin-top:10px">Remarks: ____________________________________________________</p>
+
     <div class="formm-cert">
-      <p>Certified that the above register correctly records the wages paid to the persons named
-      above for the month of ${esc(MONTH_NAMES[month - 1])} ${year}.</p>
-      <div class="row" style="margin-top:40px">
-        <div>Witness: ______________________</div>
-        <div>Date: ______________________</div>
+      <div class="totals">
+        <div>Salary — <strong>${inr(salaryTotal)}</strong></div>
+        <div>P.Tax — <strong>${inr(ptaxTotal)}</strong></div>
+        <div>Grand Total — <strong>${inr(salaryTotal + ptaxTotal)}</strong></div>
       </div>
-      <div class="sign">Signature of Employer</div>
+
+      <p>This is to certify that I have to pay in the presence of witness testifying herewith
+      paid the amount of Rs. <strong>${inr(salaryTotal)}</strong> in wages to the persons employed
+      by me and that each employee has been received from the amount due as specified against his
+      name above.</p>
+
+      <div class="row" style="margin-top:36px">
+        <div>
+          Witness — সাক্ষীগণ —<br/>
+          1. ______________________<br/>
+          2. ______________________<br/>
+          Date (তাং) ______________________
+        </div>
+        <div style="text-align:right">
+          ______________________<br/>
+          Signature of shop-keeper/employer<br/>
+          <span class="bn">দোকানের মালিকের নিয়োগকর্তার সহি</span>
+        </div>
+      </div>
     </div>
+
+    <p class="formm-note">
+      Note :- When the payment is made by money order the fact may be stated in the remarks column.
+    </p>
   </div>`
 }
 
