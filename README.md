@@ -17,7 +17,26 @@ into the attendance register.
 > tables are open to the `anon` role, and the publishable key is embedded in the
 > client bundle, so anyone holding that key can read and write pay figures and
 > bank account numbers through the Supabase API. That is a narrow exposure while
-> it runs on one machine and a serious one the moment it is deployed.
+> it runs on one machine and a serious one the moment it is deployed — including
+> to Vercel, below.
+
+## Deploying to Vercel
+
+`vercel.json` is already set up (Vite framework preset, `dist` as the output
+directory). Import the GitHub repo in Vercel, then add these two environment
+variables in the project's Settings → Environment Variables — do **not** commit
+a `.env` file; Vercel injects these at build time:
+
+```
+VITE_SUPABASE_URL=https://vmkytsytxlofjyeotmgb.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_XX7fJo6TWeYE_1bf6i7wRA_RD26SGRq
+```
+
+That key is Supabase's *publishable* key — designed to sit in client-side code,
+not a secret in the way a service-role key is. The real exposure is the one
+above: no login means anyone with that key can read and write through the
+Supabase API, which is why auth should go back in before this is live on a
+public URL.
 
 ## How the calculation works
 
@@ -27,29 +46,50 @@ pinned by tests that reproduce the signed July-2026 bank letters to the rupee
 
 | Step | Rule |
 | --- | --- |
-| Working days | Calendar days less Sundays and holidays (July 2026 → 27) |
-| Tiffin | ₹10 × (working days − absence), only for tiffin-eligible staff |
-| Gross | `monthly pay × (calendar days − absence + leave pay) ÷ calendar days + tiffin` |
-| P-Tax | West Bengal slabs, charged on the **month's actual gross** |
+| Working days | Calendar days less weekly offs and holidays (July 2026 → 27) |
+| Tiffin | rate × (working days − absence × half-day weight), tiffin-eligible staff only |
+| Gross | `monthly pay × (divisor days − absence + leave pay) ÷ divisor days + tiffin` |
+| P-Tax | configurable slabs, charged on the **month's actual gross** |
 | Net | gross − P-Tax − TDS |
-| Payable | net − advance, then **rounded up** to the whole rupee |
-| Bank file | ≥ 10 rows; larger payments are split to reach the minimum |
+| Payable | net − advance, then rounded per the company's rule and unit |
+| Bank file | ≥ N rows (configurable minimum); larger payments split to reach it |
 
-Two different day counts are used on purpose: absence and tiffin run on **working
-days**, while the salary divisor uses **calendar days**. That is what the
-workbooks do. The divisor can be switched to working days in Settings — it
-raises the per-day rate, so absence costs the employee more. Approved months are
-never recalculated.
+**Every one of those rules is a per-company setting under Settings, not a
+constant in the code:**
 
-A paid-leave day counts as an absence *and* is credited back through leave pay,
-which is why it earns no tiffin (Shambhu: 5 absent, 5 leave pay, full salary).
+- **Divisor basis** — calendar days or working days. Two different day counts
+  are used on purpose by default: absence and tiffin run on working days while
+  the salary divisor uses calendar days, because that is what the workbooks
+  do. Switching the divisor to working days raises the per-day rate, so
+  absence costs the employee more.
+- **Tiffin rate** — rupees per day present, applied only to tiffin-eligible
+  employees.
+- **Half-day weight** — how much of a day a half-day mark counts against
+  attendance (default 0.5: half absent, half present). A paid-leave day always
+  counts as a full absence *and* is credited back through leave pay,
+  independent of this setting, which is why it earns no tiffin (Shambhu: 5
+  absent, 5 leave pay, full salary).
+- **Weekly off** — which weekdays are non-working, per company.
+- **Holidays** — festival/company holidays, added or removed from Settings.
+  Each one removes a day from working days the same way a weekly off does.
+- **P-Tax slabs** — bands are contiguous by construction: only the upper bound
+  is entered and the lower bound is derived, with the last band always
+  open-ended, so no level of gross can be left uncovered. Edits are staged and
+  only written once they validate, and a warning (not a block) appears if the
+  top band would exceed the ₹2,500/year Article 276 cap. *Restore W.B.
+  schedule* puts the statutory table back.
+- **Rounding** — rule (up / nearest / down) and unit (nearest rupee or nearest
+  ten), applied to the final payable before it reaches the bank file. Up to
+  the rupee is the historical default — the workbooks never shorted an
+  employee by rounding down.
+- **Minimum bank-file rows** and **split-chunk size** — how many transactions
+  HDFC's bulk upload requires, and how large a chunk a bigger payment is
+  peeled into to help reach that minimum.
 
-P-Tax slabs are editable per company under Settings. Bands are contiguous by
-construction — only the upper bound is entered and the lower bound is derived,
-with the last band always open-ended, so no level of gross can be left
-uncovered. Edits are staged and only written once they validate, and a warning
-appears if the top band would exceed the ₹2,500/year Article 276 cap (a warning,
-not a block). *Restore W.B. schedule* puts the statutory table back.
+None of this touches a month already approved. History reads the figures a run
+was actually saved with, not a live recalculation — so changing a setting later
+never rewrites a past month; it only changes what the *next* month you prepare
+comes out to.
 
 ### Corrections applied
 
@@ -61,14 +101,26 @@ not a block). *Restore W.B. schedule* puts the statutory table back.
 ## Syncing across devices
 
 All seven tables are published to Supabase Realtime, so a change made on one
-device appears on every other open device within about a second — no reload. The
-lamp beside the company switch shows **Live**, **Connecting** or **Offline**;
-when it reads Offline the screen is a snapshot and may be stale. A device also
-re-reads when it comes back online or when its tab becomes visible again, so a
-laptop that slept catches up on wake.
+device appears on every other open device within about a second — no reload.
+The lamp beside the company switch shows **Live**, **Connecting** or
+**Offline**. Three layers make this hold up rather than just usually work:
 
-Bursts are coalesced: approving a month writes a run, a dozen run lines and ten
-bank rows at once, which is one refresh rather than twenty-three.
+1. **Live updates** — postgres_changes events, coalesced so that approving a
+   month (one run, a dozen lines, ten bank rows) triggers one reload, not
+   twenty-three.
+2. **Reconnect with backoff** — if the socket errors, times out, or closes
+   (phone locked, wifi dropped), a fresh channel opens automatically, backing
+   off from 1s up to 30s. The moment it reconnects it does one full reload,
+   because Realtime does not replay events missed while disconnected — this
+   was verified by writing a change directly to the database while a test
+   session was deliberately disconnected, and confirming it appeared the
+   instant the socket came back, no page reload involved.
+3. **A 45-second fallback poll**, independent of what the socket reports —
+   the belt to the reconnect logic's suspenders, bounding staleness to under a
+   minute even in failure modes the socket's own status never surfaces.
+
+A device also resyncs the moment it comes back online or its tab becomes
+visible again, so a laptop that slept catches up on wake.
 
 ## Daily use
 
@@ -97,9 +149,11 @@ app has no login (see the warning above). Schema lives in
 npm test
 ```
 
-15 tests. `payroll.test.ts` reproduces both companies' July-2026 runs;
-`neftFile.test.ts` compares the generated bank file cell-by-cell against the file
-actually uploaded on 04.08.2026.
+26 tests across four files. `payroll.test.ts` reproduces both companies'
+July-2026 runs and pins the configurable rounding rules and split-chunk sizes;
+`attendance.test.ts` pins half-day weighting in isolation; `neftFile.test.ts`
+compares the generated bank file cell-by-cell against the file actually
+uploaded on 04.08.2026.
 
 ## Known gaps
 
