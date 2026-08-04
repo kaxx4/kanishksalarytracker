@@ -3,6 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 import { deriveAttendance } from '../calc/attendance.ts'
 import { supabase } from '../lib/supabase.ts'
+import { toast } from './useToast.ts'
 import type {
   AttendanceMark,
   AttendanceStatus,
@@ -181,11 +182,17 @@ export const useStore = create<StoreState>((set, get) => ({
 
   async setMark(employeeId, iso, status) {
     // Optimistic — the grid should feel instant when clicking through a month.
+    const previous = get().attendance[key(employeeId, iso)]
     set((s) => ({ attendance: { ...s.attendance, [key(employeeId, iso)]: status } }))
     const { error } = await supabase
       .from('salary_attendance')
       .upsert({ employee_id: employeeId, marked_on: iso, status }, { onConflict: 'employee_id,marked_on' })
-    if (error) set({ error: error.message })
+    if (error) {
+      // Roll back the optimistic mark so the screen never lies about what saved.
+      set((s) => ({ attendance: { ...s.attendance, [key(employeeId, iso)]: previous! } }))
+      set({ error: error.message })
+      toast.fail(`Could not save that mark: ${error.message}`)
+    }
   },
 
   async bulkMark(employeeIds, isoDates, status) {
@@ -194,6 +201,7 @@ export const useStore = create<StoreState>((set, get) => ({
     )
     if (rows.length === 0) return
 
+    const previous = { ...get().attendance }
     set((s) => {
       const next = { ...s.attendance }
       for (const row of rows) next[key(row.employee_id, row.marked_on)] = status
@@ -203,7 +211,12 @@ export const useStore = create<StoreState>((set, get) => ({
     const { error } = await supabase
       .from('salary_attendance')
       .upsert(rows, { onConflict: 'employee_id,marked_on' })
-    if (error) set({ error: error.message })
+    if (error) {
+      set({ attendance: previous, error: error.message })
+      toast.fail(`Could not save: ${error.message}`)
+    } else {
+      toast.ok(`${rows.length} mark${rows.length === 1 ? '' : 's'} saved`)
+    }
   },
 
   async saveEmployee(employee) {
@@ -213,16 +226,26 @@ export const useStore = create<StoreState>((set, get) => ({
     const { error } = employee.id
       ? await supabase.from('salary_employees').update(payload).eq('id', employee.id)
       : await supabase.from('salary_employees').insert(payload)
-    if (error) set({ error: error.message })
-    else await get().loadCompanyData()
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not save employee: ${error.message}`)
+    } else {
+      await get().loadCompanyData()
+      toast.ok(`${employee.name ?? 'Employee'} saved`)
+    }
   },
 
   async updateCompany(patch) {
     const id = get().activeCompanyId
     if (!id) return
     const { error } = await supabase.from('salary_companies').update(patch).eq('id', id)
-    if (error) set({ error: error.message })
-    else await get().loadCompanyData()
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not save setting: ${error.message}`)
+    } else {
+      await get().loadCompanyData()
+      toast.ok('Setting saved')
+    }
   },
 
   /**
@@ -250,14 +273,24 @@ export const useStore = create<StoreState>((set, get) => ({
           .from('salary_holidays')
           .insert({ company_id: companyId, holiday_on: holidayOn, name: name || null })
 
-    if (error) set({ error: error.message })
-    else await get().loadCompanyData()
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not save holiday: ${error.message}`)
+    } else {
+      await get().loadCompanyData()
+      toast.ok('Holiday saved')
+    }
   },
 
   async removeHoliday(id) {
     const { error } = await supabase.from('salary_holidays').delete().eq('id', id)
-    if (error) set({ error: error.message })
-    else await get().loadCompanyData()
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not remove holiday: ${error.message}`)
+    } else {
+      await get().loadCompanyData()
+      toast.ok('Holiday removed')
+    }
   },
 
   async loadRunDetail(runId) {
@@ -276,8 +309,13 @@ export const useStore = create<StoreState>((set, get) => ({
 
   async deleteRun(runId) {
     const { error } = await supabase.from('salary_runs').delete().eq('id', runId)
-    if (error) set({ error: error.message })
-    else await get().refreshRuns()
+    if (error) {
+      set({ error: error.message })
+      toast.fail(`Could not delete: ${error.message}`)
+    } else {
+      await get().refreshRuns()
+      toast.ok('Deleted')
+    }
   },
 
   async refreshRuns() {

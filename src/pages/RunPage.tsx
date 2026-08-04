@@ -5,9 +5,10 @@ import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
 import { downloadNeftCsv, downloadNeftXls, neftFileName } from '../export/neftFile.ts'
 import { printHtml, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
 import { inr, rupees, todayIso } from '../lib/format.ts'
-import { buildMonthDays, monthOptions, previousMonth } from '../lib/month.ts'
+import { buildMonthDays, currentMonth, monthOptions } from '../lib/month.ts'
 import { supabase } from '../lib/supabase.ts'
 import { deriveAttendance, useStore } from '../store/useStore.ts'
+import { toast } from '../store/useToast.ts'
 import { MONTH_NAMES } from '../types.ts'
 import type { DraftEntry, PayMode, RunLine } from '../types.ts'
 
@@ -17,7 +18,7 @@ export default function RunPage() {
     loadAttendance, refreshRuns, runs,
   } = useStore()
 
-  const [{ year, month }, setPeriod] = useState(previousMonth)
+  const [{ year, month }, setPeriod] = useState(currentMonth)
   const [entries, setEntries] = useState<Record<string, DraftEntry>>({})
   const [chequeNo, setChequeNo] = useState('')
   const [letterDateIso, setLetterDateIso] = useState(todayIso)
@@ -56,8 +57,6 @@ export default function RunPage() {
     }
   }, [company, holidays])
 
-  const halfDayWeight = company ? Number(company.half_day_weight) : 0.5
-
   /** What the daily register says, before any manual override. */
   const derivedMap = useMemo(() => {
     const map: Record<string, ReturnType<typeof deriveAttendance>> = {}
@@ -65,11 +64,10 @@ export default function RunPage() {
       map[employee.id] = deriveAttendance(
         attendance, employee.id, year, month,
         (iso) => days.find((d) => d.iso === iso)?.isWorking ?? false,
-        halfDayWeight,
       )
     }
     return map
-  }, [staff, attendance, year, month, days, halfDayWeight])
+  }, [staff, attendance, year, month, days])
 
   /** Attendance-derived defaults, overridable per row. */
   const lineInputs: LineInput[] = useMemo(() => {
@@ -230,8 +228,9 @@ export default function RunPage() {
 
       await refreshRuns()
       setSavedAt(new Date().toLocaleTimeString('en-IN'))
+      toast.ok(approve ? `${MONTH_NAMES[month - 1]} ${year} approved` : 'Draft saved')
     } catch (err) {
-      alert(`Could not save: ${(err as Error).message}`)
+      toast.fail(`Could not save: ${(err as Error).message}`)
     } finally {
       setSaving(false)
     }

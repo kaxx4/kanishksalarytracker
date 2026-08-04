@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { useStore } from './store/useStore.ts'
+import { useToast } from './store/useToast.ts'
 import AttendancePage from './pages/AttendancePage.tsx'
 import EmployeesPage from './pages/EmployeesPage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
@@ -40,6 +41,41 @@ export default function App() {
         {tab === 'settings' && <SettingsPage />}
       </main>
       <Colophon />
+      <Toaster />
+    </div>
+  )
+}
+
+/**
+ * Save feedback for every write in the app — a small stamp sliding in from the
+ * corner rather than a generic snackbar, so it reads as part of the ledger
+ * rather than a bolted-on UI kit.
+ */
+function Toaster() {
+  const { toasts, dismiss } = useToast()
+  if (toasts.length === 0) return null
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse gap-2">
+      {toasts.map((t) => (
+        <button
+          key={t.id}
+          onClick={() => dismiss(t.id)}
+          className={`rise flex max-w-sm items-center gap-2.5 border px-4 py-2.5 text-left
+                      text-[13px] shadow-lift transition-opacity hover:opacity-90 ${
+                        t.kind === 'success'
+                          ? 'border-verdigris/40 bg-paper-raised text-ink-2'
+                          : 'border-vermillion/50 bg-vermillion-wash text-vermillion-deep'
+                      }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+              t.kind === 'success' ? 'bg-verdigris' : 'bg-vermillion'
+            }`}
+          />
+          {t.message}
+        </button>
+      ))}
     </div>
   )
 }

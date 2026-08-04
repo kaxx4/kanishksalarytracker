@@ -22,7 +22,7 @@ const CT: Company = {
   bank_name: 'HDFC BANK', bank_branch: 'India Exchange Place Branch', bank_city: 'Kolkata',
   tiffin_rate: 10, pay_divisor_basis: 'calendar', weekly_off_days: [0],
   ptax_slabs: [], min_neft_rows: 10,
-  round_rule: 'up', round_unit: 1, neft_split_chunk: 10000, half_day_weight: 0.5,
+  round_rule: 'up', round_unit: 1, neft_split_chunk: 10000,
 }
 
 const row = (name: string, ifsc: string, acct: string, amount: number, i: number): NeftRow => ({

@@ -16,37 +16,12 @@ test('an empty month is entirely present, zero absence', () => {
   assert.equal(d.present, 27)
 })
 
-test('default half-day weight is 0.5, matching historical behaviour', () => {
-  const attendance: Record<string, AttendanceStatus> = {
-    'e1|2026-07-07': 'half_day',
-  }
-  const d = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday)
-  assert.equal(d.absence, 0.5)
-  assert.equal(d.present, 26.5)
-  assert.equal(d.halfDays, 1)
-})
-
-test('a company can weight half-days differently', () => {
-  const attendance: Record<string, AttendanceStatus> = {
-    'e1|2026-07-07': 'half_day',
-  }
-  // A company that treats a half-day as only a quarter absence.
-  const light = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday, 0.25)
-  assert.equal(light.absence, 0.25)
-  assert.equal(light.present, 26.75)
-
-  // A company that treats a half-day as a full absence.
-  const strict = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday, 1)
-  assert.equal(strict.absence, 1)
-  assert.equal(strict.present, 26)
-})
-
-test('paid leave counts as absence and is credited back, independent of half-day weight', () => {
+test('paid leave counts as absence and is credited back', () => {
   const attendance: Record<string, AttendanceStatus> = {
     'e1|2026-07-03': 'paid_leave',
     'e1|2026-07-04': 'paid_leave',
   }
-  const d = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday, 0.9)
+  const d = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday)
   assert.equal(d.absence, 2)
   assert.equal(d.leavePay, 2)
 })
@@ -64,10 +39,9 @@ test('mixed statuses combine correctly', () => {
   const attendance: Record<string, AttendanceStatus> = {
     'e1|2026-07-06': 'absent',
     'e1|2026-07-07': 'paid_leave',
-    'e1|2026-07-08': 'half_day',
   }
   const d = deriveAttendance(attendance, 'e1', YEAR, MONTH, sunday)
-  assert.equal(d.absence, 2.5) // 1 absent + 1 leave + 0.5 half-day
+  assert.equal(d.absence, 2) // 1 absent + 1 leave
   assert.equal(d.leavePay, 1)
-  assert.equal(d.halfDays, 1)
+  assert.equal(d.present, 25)
 })

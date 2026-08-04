@@ -15,15 +15,12 @@ const ROUND_RULES: { value: RoundRule; label: string }[] = [
 export default function SettingsPage() {
   const { companies, activeCompanyId, updateCompany, holidays, addHoliday, removeHoliday } = useStore()
   const company = companies.find((c) => c.id === activeCompanyId)
-  const [saved, setSaved] = useState(false)
 
   if (!company) return <p className="font-mono text-xs text-ink-3">No company selected.</p>
 
-  const save = async (patch: Parameters<typeof updateCompany>[0]) => {
-    await updateCompany(patch)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
-  }
+  // updateCompany already reports success/failure via the shared toast, so
+  // this is just a thin pass-through kept for the call-site shorthand below.
+  const save = (patch: Parameters<typeof updateCompany>[0]) => updateCompany(patch)
 
   const companyHolidays = holidays
     .filter((h) => h.company_id === company.id)
@@ -37,13 +34,6 @@ export default function SettingsPage() {
 
   return (
     <div className="grid max-w-4xl gap-6">
-      {saved && (
-        <p className="fixed bottom-6 right-6 z-40 border border-verdigris bg-verdigris-wash px-4 py-2
-                      font-mono text-[10px] uppercase tracking-stamp text-verdigris">
-          Recorded
-        </p>
-      )}
-
       {/* ------------------------------------------------------ the entity */}
       <section className="rise space-y-2">
         <div className="rubric">
@@ -133,29 +123,6 @@ export default function SettingsPage() {
                 )
               })}
             </div>
-          </div>
-
-          <div className="p-5">
-            <label className="label">Half-day weight</label>
-            <input
-              className="input tnum w-32"
-              type="number"
-              step="0.05"
-              min="0"
-              max="1"
-              defaultValue={company.half_day_weight}
-              onBlur={(e) => {
-                const v = Number(e.target.value)
-                if (Number.isFinite(v) && v >= 0 && v <= 1) void save({ half_day_weight: v })
-              }}
-            />
-            <p className="mt-3 max-w-prose text-[13px] text-ink-2">
-              How much of a full day a half-day mark counts against attendance. The default,{' '}
-              <span className="tnum">0.5</span>, is half absent and half present — a half day
-              costs half a day's pay and earns half a day's tiffin. Set it to{' '}
-              <span className="tnum">1</span> to treat a half day as a full absence, or{' '}
-              <span className="tnum">0</span> to not deduct for it at all.
-            </p>
           </div>
 
           <div className="p-5">

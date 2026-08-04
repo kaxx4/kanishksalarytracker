@@ -55,6 +55,12 @@ export function previousMonth(): { year: number; month: number } {
   return { year, month }
 }
 
+/** Today's actual calendar month — what the app opens on, always. */
+export function currentMonth(): { year: number; month: number } {
+  const now = new Date()
+  return { year: now.getFullYear(), month: now.getMonth() + 1 }
+}
+
 export function monthOptions(back = 24): { year: number; month: number; label: string }[] {
   const out: { year: number; month: number; label: string }[] = []
   const now = new Date()

@@ -24,7 +24,6 @@ export interface Company {
   round_rule: RoundRule
   round_unit: number
   neft_split_chunk: number
-  half_day_weight: number
 }
 
 export interface Employee {
@@ -46,7 +45,7 @@ export interface Employee {
   active: boolean
 }
 
-export type AttendanceStatus = 'present' | 'absent' | 'half_day' | 'paid_leave' | 'holiday'
+export type AttendanceStatus = 'present' | 'absent' | 'paid_leave' | 'holiday'
 
 export interface AttendanceMark {
   id?: string
@@ -136,7 +135,6 @@ export const MONTH_NAMES = [
 export const ATTENDANCE_LABELS: Record<AttendanceStatus, string> = {
   present: 'Present',
   absent: 'Absent',
-  half_day: 'Half day',
   paid_leave: 'Paid leave',
   holiday: 'Holiday',
 }
