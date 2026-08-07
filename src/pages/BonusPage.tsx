@@ -10,10 +10,12 @@ import {
   type BonusEmployeeInput,
 } from '../calc/bonus.ts'
 import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
+import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
 import type { RoundRule } from '../calc/payroll.ts'
 import { bonusNeftFileName, downloadNeftCsv, downloadNeftXls } from '../export/neftFile.ts'
 import { printHtml, renderBonusSummary, renderLetter } from '../export/documents.ts'
 import { inr, todayIso } from '../lib/format.ts'
+import { replaceRunLines } from '../lib/replaceLines.ts'
 import { supabase } from '../lib/supabase.ts'
 import { useStore } from '../store/useStore.ts'
 import { toast } from '../store/useToast.ts'
@@ -43,11 +45,23 @@ export default function BonusPage() {
   const [letterDateIso, setLetterDateIso] = useState(todayIso)
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [confirmingOverwrite, setConfirmingOverwrite] = useState<null | { approve: boolean }>(null)
 
   const company = companies.find((c) => c.id === activeCompanyId)
   const staff = useMemo(() => employees.filter((e) => e.active), [employees])
   const existing = bonusRuns.find((r) => r.fy_start_year === fyStartYear)
   const months = useMemo(() => fyMonths(fyStartYear), [fyStartYear])
+
+  /*
+   * Show the cheque number and letter date actually stored against this bonus
+   * year. Saving writes `chequeNo || null`, so a blank field on an already
+   * approved year would wipe the real cheque number on the next save. Keyed on
+   * the run's id so a realtime refresh can't overwrite what is being typed.
+   */
+  useEffect(() => {
+    setChequeNo(existing?.cheque_no ?? '')
+    setLetterDateIso(existing?.letter_date ?? todayIso())
+  }, [existing?.id, fyStartYear, activeCompanyId])
 
   // Pull the per-company/FY rate + round rule, and every saved payroll month's
   // bonus-eligible wage for the roster, whenever the company or FY changes.
@@ -55,7 +69,6 @@ export default function BonusPage() {
     if (!company) return
     setManualAddOn({})
     setSavedAt(null)
-    setChequeNo(existing?.cheque_no ?? '')
 
     let cancelled = false
     async function load() {
@@ -202,6 +215,15 @@ export default function BonusPage() {
     else toast.ok('Bonus rate saved')
   }
 
+  /** Same overwrite guard as Month End — an approved bonus year is a paid one. */
+  function requestSave(approve: boolean) {
+    if (existing && (existing.status === 'approved' || existing.is_historical)) {
+      setConfirmingOverwrite({ approve })
+      return
+    }
+    void save(approve)
+  }
+
   async function save(approve: boolean) {
     if (!company) return
     setSaving(true)
@@ -217,7 +239,7 @@ export default function BonusPage() {
             letter_date: letterDateIso, value_date: letterDateIso,
             neft_total: result.totals.neftTotal, cash_total: result.totals.cashTotal,
             grand_total: result.totals.grandTotal,
-            is_historical: false,
+            is_historical: existing?.is_historical ?? false,
             approved_at: approve ? new Date().toISOString() : null,
           },
           { onConflict: 'company_id,fy_start_year' },
@@ -226,22 +248,21 @@ export default function BonusPage() {
         .single()
       if (error) throw error
 
-      await supabase.from('salary_bonus_lines').delete().eq('run_id', run.id)
-      const { data: inserted, error: lineErr } = await supabase
-        .from('salary_bonus_lines')
-        .insert(asBonusRunLines().map(({ id: _id, run_id: _r, ...rest }) => ({ ...rest, run_id: run.id })))
-        .select()
-      if (lineErr) throw lineErr
-
-      await supabase.from('salary_bonus_neft_rows').delete().eq('run_id', run.id)
-      const byEmployee = new Map((inserted ?? []).map((l) => [l.employee_id, l.id]))
-      const neftPayload = neft.rows.map((row, i) => ({
-        run_id: run.id,
-        run_line_id: byEmployee.get(row.employeeId)!,
-        seq: i + 1,
-        amount: row.amount,
-      }))
-      if (neftPayload.length) await supabase.from('salary_bonus_neft_rows').insert(neftPayload)
+      await replaceRunLines({
+        linesTable: 'salary_bonus_lines',
+        neftTable: 'salary_bonus_neft_rows',
+        runId: run.id,
+        lines: asBonusRunLines().map(({ id: _id, run_id: _r, ...rest }) => ({ ...rest, run_id: run.id })),
+        neftRowsFor: (inserted) => {
+          const byEmployee = new Map(inserted.map((l) => [l.employee_id, l.id]))
+          return neft.rows.map((row, i) => ({
+            run_id: run.id,
+            run_line_id: byEmployee.get(row.employeeId)!,
+            seq: i + 1,
+            amount: row.amount,
+          }))
+        },
+      })
 
       await refreshBonusRuns()
       setSavedAt(new Date().toLocaleTimeString('en-IN'))
@@ -322,7 +343,8 @@ export default function BonusPage() {
         {approved && (
           <Note tone="ochre">
             {fyLabel(fyStartYear)} bonus is already approved
-            {existing?.cheque_no ? ` under cheque ${existing.cheque_no}` : ''}. Saving again overwrites it.
+            {existing?.cheque_no ? ` under cheque ${existing.cheque_no}` : ''} at ₹
+            {inr(Number(existing?.grand_total ?? 0))}. Saving asks before it overwrites.
           </Note>
         )}
         {missingBank.length > 0 && (
@@ -535,10 +557,10 @@ export default function BonusPage() {
             className="btn-primary"
             disabled={neft.short || missingBank.length > 0}
             onClick={() =>
-              downloadNeftXls(
+              void downloadNeftXls(
                 { company, rows: neft.rows, valueDate: letterDateIso },
                 bonusNeftFileName(company, fyStartYear),
-              )
+              ).catch((err: Error) => toast.fail(`Could not build the file: ${err.message}`))
             }
           >
             Bulk NEFT .xls
@@ -546,25 +568,44 @@ export default function BonusPage() {
           <button
             className="btn-ghost"
             onClick={() =>
-              downloadNeftCsv(
+              void downloadNeftCsv(
                 { company, rows: neft.rows, valueDate: letterDateIso },
                 bonusNeftFileName(company, fyStartYear),
-              )
+              ).catch((err: Error) => toast.fail(`Could not build the file: ${err.message}`))
             }
           >
             .csv
           </button>
 
           <div className="ml-auto flex gap-2">
-            <button className="btn-secondary" disabled={saving} onClick={() => void save(false)}>
+            <button className="btn-secondary" disabled={saving} onClick={() => requestSave(false)}>
               Save draft
             </button>
-            <button className="btn-primary" disabled={saving} onClick={() => void save(true)}>
+            <button className="btn-primary" disabled={saving} onClick={() => requestSave(true)}>
               {saving ? 'Saving…' : 'Approve bonus'}
             </button>
           </div>
         </div>
       </section>
+
+      {confirmingOverwrite && (
+        <ConfirmDialog
+          title={`Overwrite the ${fyLabel(fyStartYear)} bonus?`}
+          body={
+            `This bonus year is already saved${
+              existing?.cheque_no ? ` under cheque ${existing.cheque_no}` : ''
+            } at ₹${inr(Number(existing?.grand_total ?? 0))}. Saving replaces it with the ` +
+            `₹${inr(result.totals.grandTotal)} shown here, and the old figures cannot be recovered.`
+          }
+          confirmLabel={confirmingOverwrite.approve ? 'Overwrite and approve' : 'Overwrite draft'}
+          onCancel={() => setConfirmingOverwrite(null)}
+          onConfirm={() => {
+            const { approve } = confirmingOverwrite
+            setConfirmingOverwrite(null)
+            void save(approve)
+          }}
+        />
+      )}
     </div>
   )
 }

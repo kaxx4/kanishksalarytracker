@@ -102,13 +102,13 @@ function Masthead() {
   const company = companies.find((c) => c.id === activeCompanyId)
 
   return (
-    <header className="mx-auto max-w-[1440px] px-6 pt-7">
+    <header className="mx-auto max-w-[1440px] overflow-hidden px-6 pt-7">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="rise">
           <div className="font-mono text-[10px] uppercase tracking-stamp text-verdigris">
             Salary&nbsp;Register
           </div>
-          <h1 className="mt-1.5 font-display text-[2.6rem] leading-[1.05] tracking-[-0.015em]">
+          <h1 className="mt-1.5 font-display text-[2rem] leading-[1.05] tracking-[-0.015em] sm:text-[2.6rem]">
             {company?.name ?? '—'}
           </h1>
           <p className="mt-1.5 font-mono text-[11px] text-ink-3">
@@ -152,7 +152,36 @@ function Masthead() {
  * offline means it is showing a snapshot and may be stale.
  */
 function SyncLamp() {
-  const { sync, lastSyncAt } = useStore()
+  const { sync, lastSyncAt, unsavedMarks, flushMarks } = useStore()
+
+  const seen = lastSyncAt
+    ? new Date(lastSyncAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    : null
+
+  /*
+   * A queued mark outranks the socket's opinion. The connection can read
+   * "Live" while a write is still waiting to be accepted, and the thing worth
+   * knowing is always whether today's marks have actually landed — so the
+   * backlog takes over the lamp until it drains, and stays put rather than
+   * flashing past like a toast.
+   */
+  if (unsavedMarks > 0) {
+    return (
+      <button
+        onClick={() => void flushMarks()}
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase
+                   tracking-[.13em] text-ochre transition-colors hover:text-ink"
+        title={
+          `${unsavedMarks} mark${unsavedMarks === 1 ? '' : 's'} not yet saved. ` +
+          'They are held safely and retried automatically, and survive closing ' +
+          'this tab. Click to retry now.'
+        }
+      >
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ochre" />
+        {unsavedMarks} unsaved
+      </button>
+    )
+  }
 
   const { dot, text, label } = {
     live: { dot: 'bg-verdigris', text: 'text-ink-3', label: 'Live' },
@@ -160,17 +189,13 @@ function SyncLamp() {
     offline: { dot: 'bg-vermillion', text: 'text-vermillion', label: 'Offline' },
   }[sync]
 
-  const seen = lastSyncAt
-    ? new Date(lastSyncAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-    : null
-
   return (
     <span
       className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase
                   tracking-[.13em] ${text}`}
       title={
         sync === 'live'
-          ? `Synced across devices${seen ? ` · last change ${seen}` : ''}`
+          ? `All marks saved${seen ? ` · last change ${seen}` : ''}`
           : 'Changes made elsewhere may not be showing'
       }
     >
@@ -183,15 +208,26 @@ function SyncLamp() {
 function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   return (
     <nav className="sticky top-0 z-20 border-b border-rule bg-paper/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[1440px] gap-7 px-6">
+      {/*
+        Six tabs do not fit across a phone. The strip scrolls within itself —
+        `shrink-0` stops flexbox squeezing the labels into two lines — so the
+        page body never picks up a horizontal scrollbar of its own. The bar is
+        sticky, and a sideways-scrolling page under a sticky header is what
+        made every screen drift off-centre on mobile.
+      */}
+      <div
+        className="mx-auto flex max-w-[1440px] gap-5 overflow-x-auto px-6 sm:gap-7
+                   [-ms-overflow-style:none] [scrollbar-width:none]
+                   [&::-webkit-scrollbar]:hidden"
+      >
         {TABS.map(({ id, label, folio }) => {
           const active = tab === id
           return (
             <button
               key={id}
               onClick={() => onTab(id)}
-              className={`group relative flex items-baseline gap-2 py-3 font-mono text-[11px]
-                uppercase tracking-[.13em] transition-colors ${
+              className={`group relative flex shrink-0 items-baseline gap-2 py-3 font-mono
+                text-[11px] uppercase tracking-[.13em] transition-colors ${
                   active ? 'text-ink' : 'text-ink-3 hover:text-ink-2'
                 }`}
             >

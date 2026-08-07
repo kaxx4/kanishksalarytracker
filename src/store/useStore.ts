@@ -58,6 +58,8 @@ interface StoreState {
   /** Attendance for the month currently open, keyed `${employeeId}|${iso}`. */
   attendance: Record<string, AttendanceStatus>
   attendanceMonth: { year: number; month: number } | null
+  /** Marks queued but not yet accepted by the server. 0 means everything saved. */
+  unsavedMarks: number
 
   init: () => Promise<void>
 
@@ -66,6 +68,9 @@ interface StoreState {
   loadAttendance: (year: number, month: number) => Promise<void>
   setMark: (employeeId: string, iso: string, status: AttendanceStatus) => Promise<void>
   bulkMark: (employeeIds: string[], isoDates: string[], status: AttendanceStatus) => Promise<void>
+  queueMarks: (rows: PendingMark[], announce: boolean) => Promise<void>
+  /** Retry the queue now — used on reconnect and by the "retry" affordance. */
+  flushMarks: () => Promise<void>
 
   saveEmployee: (employee: Partial<Employee> & { id?: string }) => Promise<void>
   updateCompany: (patch: Partial<Company>) => Promise<void>
@@ -82,6 +87,107 @@ interface StoreState {
 
 const key = (employeeId: string, iso: string) => `${employeeId}|${iso}`
 
+/* ---------------------------------------------------------------- outbox --
+ *
+ * Attendance is marked every day, often on a phone, often on a bad connection.
+ * A mark must never be lost, so it is not written straight to the network and
+ * hoped for: it goes into an outbox that survives a failed request, a dropped
+ * connection, a closed tab and a browser crash.
+ *
+ *   click -> outbox (localStorage, synchronous) -> optimistic paint -> flush
+ *
+ * The flush retries with backoff until the server accepts it, and runs again
+ * whenever realtime reconnects or the fallback poll ticks. Nothing is ever
+ * rolled back on failure — a rolled-back mark is exactly the silent loss this
+ * is meant to prevent — so a queued mark stays on screen and stays in the
+ * queue, and `unsavedMarks` reports the backlog until it drains.
+ *
+ * Reloading the register merges the outbox back over whatever the server
+ * returned, so an in-flight mark cannot be blanked by a refresh landing first.
+ */
+const OUTBOX_KEY = 'salary-tracker.outbox.v1'
+
+type PendingMark = { employee_id: string; marked_on: string; status: AttendanceStatus }
+
+let outbox = new Map<string, PendingMark>()
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+let flushBackoffMs = 1000
+let flushing = false
+
+function readOutbox(): Map<string, PendingMark> {
+  try {
+    const raw = localStorage.getItem(OUTBOX_KEY)
+    if (!raw) return new Map()
+    const entries = JSON.parse(raw) as PendingMark[]
+    return new Map(entries.map((m) => [key(m.employee_id, m.marked_on), m]))
+  } catch {
+    // A corrupt or unavailable store must not stop the app from opening.
+    return new Map()
+  }
+}
+
+function persistOutbox(): void {
+  try {
+    localStorage.setItem(OUTBOX_KEY, JSON.stringify([...outbox.values()]))
+  } catch {
+    /* private mode / quota — the in-memory queue still retries this session. */
+  }
+}
+
+/**
+ * Push the whole queue at the server in one upsert.
+ *
+ * Returns true when the queue drained. Entries are removed only if they were
+ * not re-marked while the request was in flight, so a click made mid-flush is
+ * kept and sent on the next pass rather than being dropped as "already saved".
+ */
+async function flushOutbox(set: (partial: Partial<StoreState>) => void): Promise<boolean> {
+  if (outbox.size === 0 || flushing) return outbox.size === 0
+  flushing = true
+  const batch = [...outbox.entries()]
+
+  try {
+    const { error } = await supabase
+      .from('salary_attendance')
+      .upsert(
+        batch.map(([, m]) => m),
+        { onConflict: 'employee_id,marked_on' },
+      )
+
+    if (error) {
+      set({ unsavedMarks: outbox.size, error: error.message })
+      scheduleFlush(set)
+      return false
+    }
+
+    for (const [k, sent] of batch) {
+      if (outbox.get(k) === sent) outbox.delete(k)
+    }
+    persistOutbox()
+    flushBackoffMs = 1000
+    set({ unsavedMarks: outbox.size, error: null })
+    return outbox.size === 0
+  } catch (err) {
+    // Offline throws rather than returning an error — same treatment: keep the
+    // queue, keep the marks on screen, try again shortly.
+    set({ unsavedMarks: outbox.size, error: (err as Error).message })
+    scheduleFlush(set)
+    return false
+  } finally {
+    flushing = false
+  }
+}
+
+function scheduleFlush(set: (partial: Partial<StoreState>) => void): void {
+  if (flushTimer) return
+  const wait = flushBackoffMs
+  flushBackoffMs = Math.min(flushBackoffMs * 2, 30_000)
+  flushTimer = setTimeout(() => {
+    flushTimer = null
+    void flushOutbox(set)
+  }, wait)
+}
+
 export const useStore = create<StoreState>((set, get) => ({
   ready: false,
   loading: false,
@@ -97,12 +203,19 @@ export const useStore = create<StoreState>((set, get) => ({
   bonusRuns: [],
   attendance: {},
   attendanceMonth: null,
+  unsavedMarks: 0,
 
   async init() {
+    // Recover anything that was queued but never accepted — a tab closed or a
+    // browser killed mid-save must not cost a day's marks.
+    outbox = readOutbox()
+    set({ unsavedMarks: outbox.size })
+
     // No login: the app talks to Supabase as the anon role and loads straight in.
     await get().loadCompanyData()
     set({ ready: true })
     subscribe(get, set)
+    void flushOutbox(set)
   },
 
   async setActiveCompany(id) {
@@ -194,46 +307,50 @@ export const useStore = create<StoreState>((set, get) => ({
     for (const row of (data ?? []) as AttendanceMark[]) {
       map[key(row.employee_id, row.marked_on)] = row.status
     }
+    // Queued marks win over the server's copy: they are newer by definition,
+    // and without this a refresh landing between click and save would wipe the
+    // mark off the screen and invite a second, wrong click.
+    for (const [k, pending] of outbox) map[k] = pending.status
+
     set({ attendance: map, attendanceMonth: { year, month } })
   },
 
   async setMark(employeeId, iso, status) {
-    // Optimistic — the grid should feel instant when clicking through a month.
-    const previous = get().attendance[key(employeeId, iso)]
-    set((s) => ({ attendance: { ...s.attendance, [key(employeeId, iso)]: status } }))
-    const { error } = await supabase
-      .from('salary_attendance')
-      .upsert({ employee_id: employeeId, marked_on: iso, status }, { onConflict: 'employee_id,marked_on' })
-    if (error) {
-      // Roll back the optimistic mark so the screen never lies about what saved.
-      set((s) => ({ attendance: { ...s.attendance, [key(employeeId, iso)]: previous! } }))
-      set({ error: error.message })
-      toast.fail(`Could not save that mark: ${error.message}`)
-    }
+    await get().queueMarks([{ employee_id: employeeId, marked_on: iso, status }], false)
   },
 
   async bulkMark(employeeIds, isoDates, status) {
     const rows = employeeIds.flatMap((employeeId) =>
       isoDates.map((marked_on) => ({ employee_id: employeeId, marked_on, status })),
     )
+    await get().queueMarks(rows, true)
+  },
+
+  /**
+   * The single door every attendance write goes through: queue first, paint
+   * immediately, then flush. `announce` keeps the drag-to-paint confirmation
+   * without firing a toast for every single click.
+   */
+  async queueMarks(rows, announce) {
     if (rows.length === 0) return
 
-    const previous = { ...get().attendance }
+    for (const row of rows) outbox.set(key(row.employee_id, row.marked_on), row)
+    persistOutbox()
+
     set((s) => {
       const next = { ...s.attendance }
-      for (const row of rows) next[key(row.employee_id, row.marked_on)] = status
-      return { attendance: next }
+      for (const row of rows) next[key(row.employee_id, row.marked_on)] = row.status
+      return { attendance: next, unsavedMarks: outbox.size }
     })
 
-    const { error } = await supabase
-      .from('salary_attendance')
-      .upsert(rows, { onConflict: 'employee_id,marked_on' })
-    if (error) {
-      set({ attendance: previous, error: error.message })
-      toast.fail(`Could not save: ${error.message}`)
-    } else {
+    const saved = await flushOutbox(set)
+    if (saved && announce) {
       toast.ok(`${rows.length} mark${rows.length === 1 ? '' : 's'} saved`)
     }
+  },
+
+  async flushMarks() {
+    await flushOutbox(set)
   },
 
   async saveEmployee(employee) {
@@ -407,11 +524,17 @@ let listenersBound = false
 const MAX_BACKOFF_MS = 30_000
 const FALLBACK_POLL_MS = 45_000
 
-function reloadEverything(get: () => StoreState): void {
+function reloadEverything(
+  get: () => StoreState,
+  set: (partial: Partial<StoreState>) => void,
+): void {
   const state = get()
   void state.loadCompanyData(true)
   const month = state.attendanceMonth
   if (month) void state.loadAttendance(month.year, month.month)
+  // Coming back from a gap is the moment queued marks are most likely to be
+  // waiting, so every catch-up drains the outbox too.
+  void flushOutbox(set)
 }
 
 function connectChannel(
@@ -466,7 +589,7 @@ function connectChannel(
       // that nothing changed.
       if (wasOffline) {
         wasOffline = false
-        reloadEverything(get)
+        reloadEverything(get, set)
       }
     } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
       wasOffline = true
@@ -497,7 +620,7 @@ function subscribe(
   // reports, so staleness is always bounded even in failure modes the status
   // callback never sees.
   if (pollTimer) clearInterval(pollTimer)
-  pollTimer = setInterval(() => reloadEverything(get), FALLBACK_POLL_MS)
+  pollTimer = setInterval(() => reloadEverything(get, set), FALLBACK_POLL_MS)
 
   // A device that slept or lost Wi-Fi should catch up — and reconnect
   // immediately rather than wait out whatever backoff it was mid-way through
@@ -513,7 +636,7 @@ function subscribe(
     })
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible') return
-      reloadEverything(get)
+      reloadEverything(get, set)
       if (get().sync !== 'live') {
         backoffMs = 1000
         if (reconnectTimer) {

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
 import { computeMonth, type CompanySettings, type LineInput } from '../calc/payroll.ts'
 import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
 import { downloadNeftCsv, downloadNeftXls, neftFileName } from '../export/neftFile.ts'
 import { printHtml, renderFormM, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
 import { inr, rupees, todayIso } from '../lib/format.ts'
 import { buildMonthDays, currentMonth, monthOptions } from '../lib/month.ts'
+import { replaceRunLines } from '../lib/replaceLines.ts'
 import { supabase } from '../lib/supabase.ts'
 import { deriveAttendance, useStore } from '../store/useStore.ts'
 import { toast } from '../store/useToast.ts'
@@ -25,6 +27,7 @@ export default function RunPage() {
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [splits, setSplits] = useState<Record<number, number[]> | null>(null)
+  const [confirmingOverwrite, setConfirmingOverwrite] = useState<null | { approve: boolean }>(null)
 
   const company = companies.find((c) => c.id === activeCompanyId)
   const staff = useMemo(() => employees.filter((e) => e.active), [employees])
@@ -36,6 +39,24 @@ export default function RunPage() {
     setSplits(null)
     setSavedAt(null)
   }, [year, month, activeCompanyId, loadAttendance])
+
+  /*
+   * Hydrate the cheque number and letter date from the month's saved run.
+   *
+   * Without this the fields open blank on an already-saved month, and because
+   * `save()` writes `chequeNo || null` a second Save silently wipes the cheque
+   * number off an approved run and resets its letter date to today. That has
+   * already destroyed one real record (MKCP July 2026, cheque 000614), so the
+   * fields must always show what is actually stored.
+   *
+   * Keyed on the run's id rather than the run object: the id only changes when
+   * a run is created or deleted for this month, so a realtime refresh (or the
+   * refresh after saving) can never clobber what is being typed.
+   */
+  useEffect(() => {
+    setChequeNo(existing?.cheque_no ?? '')
+    setLetterDateIso(existing?.letter_date ?? todayIso())
+  }, [existing?.id, year, month, activeCompanyId])
 
   const days = useMemo(
     () => (company ? buildMonthDays(year, month, company, holidays) : []),
@@ -183,6 +204,20 @@ export default function RunPage() {
       }
     })
 
+  /**
+   * Saving upserts on (company, year, month), so re-saving a month that is
+   * already approved or was imported from a pay register overwrites it in
+   * place. Those two cases go through a confirmation first; an ordinary draft
+   * saves straight away.
+   */
+  function requestSave(approve: boolean) {
+    if (existing && (existing.status === 'approved' || existing.is_historical)) {
+      setConfirmingOverwrite({ approve })
+      return
+    }
+    void save(approve)
+  }
+
   async function save(approve: boolean) {
     if (!company || !result) return
     setSaving(true)
@@ -200,7 +235,9 @@ export default function RunPage() {
             letter_date: letterDateIso, value_date: letterDateIso,
             neft_total: result.totals.neftTotal, cash_total: result.totals.cashTotal,
             grand_total: result.totals.grandTotal,
-            is_historical: false,
+            // Recomputing a month imported from a pay register must not quietly
+            // relabel it as a run this app calculated from attendance.
+            is_historical: existing?.is_historical ?? false,
             approved_at: approve ? new Date().toISOString() : null,
           },
           { onConflict: 'company_id,year,month' },
@@ -209,22 +246,21 @@ export default function RunPage() {
         .single()
       if (error) throw error
 
-      await supabase.from('salary_run_lines').delete().eq('run_id', run.id)
-      const { data: inserted, error: lineErr } = await supabase
-        .from('salary_run_lines')
-        .insert(asRunLines().map(({ id: _id, run_id: _r, ...rest }) => ({ ...rest, run_id: run.id })))
-        .select()
-      if (lineErr) throw lineErr
-
-      await supabase.from('salary_neft_rows').delete().eq('run_id', run.id)
-      const byEmployee = new Map((inserted ?? []).map((l) => [l.employee_id, l.id]))
-      const neftPayload = neft.rows.map((row, i) => ({
-        run_id: run.id,
-        run_line_id: byEmployee.get(row.employeeId)!,
-        seq: i + 1,
-        amount: row.amount,
-      }))
-      if (neftPayload.length) await supabase.from('salary_neft_rows').insert(neftPayload)
+      await replaceRunLines({
+        linesTable: 'salary_run_lines',
+        neftTable: 'salary_neft_rows',
+        runId: run.id,
+        lines: asRunLines().map(({ id: _id, run_id: _r, ...rest }) => ({ ...rest, run_id: run.id })),
+        neftRowsFor: (inserted) => {
+          const byEmployee = new Map(inserted.map((l) => [l.employee_id, l.id]))
+          return neft.rows.map((row, i) => ({
+            run_id: run.id,
+            run_line_id: byEmployee.get(row.employeeId)!,
+            seq: i + 1,
+            amount: row.amount,
+          }))
+        },
+      })
 
       await refreshRuns()
       setSavedAt(new Date().toLocaleTimeString('en-IN'))
@@ -313,11 +349,12 @@ export default function RunPage() {
 
       {/* ------------------------------------------------------------- notes */}
       <div className="space-y-2">
-        {approved && (
+        {existing && (approved || existing.is_historical) && (
           <Note tone="ochre">
-            {MONTH_NAMES[month - 1]} {year} is already approved
-            {existing?.cheque_no ? ` under cheque ${existing.cheque_no}` : ''}. Saving again
-            overwrites it.
+            {MONTH_NAMES[month - 1]} {year} is already{' '}
+            {existing.is_historical ? 'on record from a pay register' : 'approved'}
+            {existing.cheque_no ? ` under cheque ${existing.cheque_no}` : ''} at ₹
+            {inr(Number(existing.grand_total))}. Saving asks before it overwrites.
           </Note>
         )}
         {missingBank.length > 0 && (
@@ -631,10 +668,10 @@ export default function RunPage() {
             className="btn-primary"
             disabled={neft.short || missingBank.length > 0}
             onClick={() =>
-              downloadNeftXls(
+              void downloadNeftXls(
                 { company, rows: neft.rows, valueDate: letterDateIso },
                 neftFileName(company, year, month),
-              )
+              ).catch((err: Error) => toast.fail(`Could not build the file: ${err.message}`))
             }
           >
             Bulk NEFT .xls
@@ -642,25 +679,45 @@ export default function RunPage() {
           <button
             className="btn-ghost"
             onClick={() =>
-              downloadNeftCsv(
+              void downloadNeftCsv(
                 { company, rows: neft.rows, valueDate: letterDateIso },
                 neftFileName(company, year, month),
-              )
+              ).catch((err: Error) => toast.fail(`Could not build the file: ${err.message}`))
             }
           >
             .csv
           </button>
 
           <div className="ml-auto flex gap-2">
-            <button className="btn-secondary" disabled={saving} onClick={() => void save(false)}>
+            <button className="btn-secondary" disabled={saving} onClick={() => requestSave(false)}>
               Save draft
             </button>
-            <button className="btn-primary" disabled={saving} onClick={() => void save(true)}>
+            <button className="btn-primary" disabled={saving} onClick={() => requestSave(true)}>
               {saving ? 'Saving…' : 'Approve month'}
             </button>
           </div>
         </div>
       </section>
+
+      {confirmingOverwrite && (
+        <ConfirmDialog
+          title={`Overwrite ${MONTH_NAMES[month - 1]} ${year}?`}
+          body={
+            `This month is already saved${
+              existing?.is_historical ? ' from a pay register' : ''
+            }${existing?.cheque_no ? ` under cheque ${existing.cheque_no}` : ''}` +
+            ` at ₹${inr(Number(existing?.grand_total ?? 0))}. Saving replaces it with the ` +
+            `₹${inr(result.totals.grandTotal)} shown here, and the old figures cannot be recovered.`
+          }
+          confirmLabel={confirmingOverwrite.approve ? 'Overwrite and approve' : 'Overwrite draft'}
+          onCancel={() => setConfirmingOverwrite(null)}
+          onConfirm={() => {
+            const { approve } = confirmingOverwrite
+            setConfirmingOverwrite(null)
+            void save(approve)
+          }}
+        />
+      )}
     </div>
   )
 }

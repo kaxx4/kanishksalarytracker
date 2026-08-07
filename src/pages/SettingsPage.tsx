@@ -33,7 +33,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="grid max-w-4xl gap-6">
+    // grid-cols + min-w-0 on the sections: without both, each card's min-content
+    // width sets the column and the page scrolls sideways on a phone.
+    <div className="grid max-w-4xl grid-cols-[minmax(0,1fr)] gap-6 [&>section]:min-w-0">
       {/* ------------------------------------------------------ the entity */}
       <section className="rise space-y-2">
         <div className="rubric">

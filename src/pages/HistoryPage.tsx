@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { downloadNeftXls, neftFileName } from '../export/neftFile.ts'
+import { toast } from '../store/useToast.ts'
 import { printHtml, renderFormM, renderLetter, renderPayslipSheets, renderSummary } from '../export/documents.ts'
 import { inr } from '../lib/format.ts'
 import { useStore } from '../store/useStore.ts'
@@ -32,9 +33,13 @@ export default function HistoryPage() {
   if (!company) return <p className="font-mono text-xs text-ink-3">No company selected.</p>
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
+    // `min-w-0` on both columns: a grid item's automatic minimum size is its
+    // content's min-content width, so without it the widest cell in the detail
+    // table stretches the whole column past the viewport and the page scrolls
+    // sideways on a phone. The table keeps its own overflow-x for the wide part.
+    <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
       {/* ---------------------------------------------------------- the index */}
-      <aside className="rise space-y-2">
+      <aside className="rise min-w-0 space-y-2">
         <div className="rubric">
           <span>Index</span>
           <span className="ml-auto tnum normal-case tracking-normal text-ink-4">
@@ -93,7 +98,7 @@ export default function HistoryPage() {
       </aside>
 
       {/* --------------------------------------------------------- the folio */}
-      <div>
+      <div className="min-w-0">
         {!detail && (
           <p className="font-mono text-[11px] text-ink-3">Pick a month from the index.</p>
         )}
@@ -208,14 +213,14 @@ export default function HistoryPage() {
                         paymentIndex: i,
                       }
                     })
-                    downloadNeftXls(
+                    void downloadNeftXls(
                       {
                         company,
                         rows,
                         valueDate: detail.run.value_date ?? detail.run.letter_date ?? '',
                       },
                       neftFileName(company, detail.run.year, detail.run.month),
-                    )
+                    ).catch((err: Error) => toast.fail(`Could not build the file: ${err.message}`))
                   }}
                 >
                   Bank file

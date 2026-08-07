@@ -9,8 +9,6 @@
  * Account numbers are written as text — several beneficiary accounts have
  * leading zeros (e.g. 0072010201626) that would be destroyed by numeric typing.
  */
-import * as XLSX from 'xlsx'
-
 import { neftDate } from '../lib/format.ts'
 import type { NeftRow } from '../calc/neft.ts'
 import type { Company } from '../types.ts'
@@ -86,7 +84,19 @@ export function buildNeftMatrix({ company, rows, valueDate }: NeftFileOptions): 
   return [[...NEFT_HEADERS], ...body]
 }
 
-function sheetFromMatrix(matrix: (string | number)[][]): XLSX.WorkSheet {
+/**
+ * SheetJS is ~430 kB — over half the bundle — and is only needed at the moment
+ * someone actually downloads a bank file. Loading it on demand keeps it out of
+ * the initial download; the chunk is fetched once and cached by the browser.
+ */
+type Sheets = typeof import('xlsx')
+let sheetsPromise: Promise<Sheets> | null = null
+function loadSheets(): Promise<Sheets> {
+  sheetsPromise ??= import('xlsx')
+  return sheetsPromise
+}
+
+function sheetFromMatrix(XLSX: Sheets, matrix: (string | number)[][]): import('xlsx').WorkSheet {
   const sheet = XLSX.utils.aoa_to_sheet(matrix)
   // Force the two account-number columns and the branch code to text so that
   // leading zeros survive the round-trip.
@@ -105,9 +115,13 @@ function sheetFromMatrix(matrix: (string | number)[][]): XLSX.WorkSheet {
   return sheet
 }
 
-export function buildNeftWorkbook(options: NeftFileOptions): XLSX.WorkBook {
+function buildNeftWorkbook(XLSX: Sheets, options: NeftFileOptions): import('xlsx').WorkBook {
   const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, sheetFromMatrix(buildNeftMatrix(options)), 'File Format')
+  XLSX.utils.book_append_sheet(
+    workbook,
+    sheetFromMatrix(XLSX, buildNeftMatrix(options)),
+    'File Format',
+  )
   XLSX.utils.book_append_sheet(
     workbook,
     XLSX.utils.aoa_to_sheet(FIELD_VALIDATION_ROWS),
@@ -126,13 +140,15 @@ export function bonusNeftFileName(company: Company, fyStartYear: number): string
 }
 
 /** Writes a real BIFF8 .xls, matching the format the bank template uses. */
-export function downloadNeftXls(options: NeftFileOptions, fileName: string): void {
-  XLSX.writeFile(buildNeftWorkbook(options), `${fileName}.xls`, { bookType: 'biff8' })
+export async function downloadNeftXls(options: NeftFileOptions, fileName: string): Promise<void> {
+  const XLSX = await loadSheets()
+  XLSX.writeFile(buildNeftWorkbook(XLSX, options), `${fileName}.xls`, { bookType: 'biff8' })
 }
 
 /** CSV fallback, in case net-banking rejects the .xls on a given day. */
-export function downloadNeftCsv(options: NeftFileOptions, fileName: string): void {
-  const sheet = sheetFromMatrix(buildNeftMatrix(options))
+export async function downloadNeftCsv(options: NeftFileOptions, fileName: string): Promise<void> {
+  const XLSX = await loadSheets()
+  const sheet = sheetFromMatrix(XLSX, buildNeftMatrix(options))
   const csv = XLSX.utils.sheet_to_csv(sheet)
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   triggerDownload(blob, `${fileName}.csv`)
