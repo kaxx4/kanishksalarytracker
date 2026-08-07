@@ -22,10 +22,26 @@ const MARK: Record<AttendanceStatus, { glyph: string; cls: string }> = {
 }
 
 export default function AttendancePage() {
-  const { companies, activeCompanyId, employees, holidays, attendance, loadAttendance, bulkMark } =
-    useStore()
+  const {
+    companies, activeCompanyId, employees, holidays, attendance,
+    loadAttendance, bulkMark, markCells, undo, undoDepth,
+  } = useStore()
   const [{ year, month }, setPeriod] = useState(currentMonth)
   const [confirmingClear, setConfirmingClear] = useState(false)
+
+  // Ctrl+Z / Cmd+Z, the reflex anyone reaches for after a mis-click.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.key === 'z' || e.key === 'Z') || !(e.ctrlKey || e.metaKey) || e.shiftKey) return
+      const el = e.target as HTMLElement | null
+      // Leave the browser's own undo alone while typing.
+      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
+      e.preventDefault()
+      void undo()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo])
 
   /**
    * Drag-to-paint: mousedown on a cell decides the status (by the same
@@ -99,23 +115,28 @@ export default function AttendancePage() {
       paintStatusRef.current = null
       if (!status || touched.size === 0) return
 
-      const byEmployee = new Map<string, string[]>()
-      for (const k of touched) {
+      /*
+       * Send the exact cells the drag crossed.
+       *
+       * This used to collect the touched employees and the touched dates into
+       * two lists and hand both to a call that pairs every employee with every
+       * date. A drag straight down one column or along one row happens to come
+       * out right, which is why it went unnoticed; anything diagonal wrote the
+       * whole rectangle. Four employees brushed across seven days marked 28
+       * cells instead of the seven the hand actually crossed.
+       */
+      const cells = [...touched].map((k) => {
         const [employeeId, iso] = k.split('|')
-        byEmployee.set(employeeId, [...(byEmployee.get(employeeId) ?? []), iso])
-      }
+        return { employeeId, iso }
+      })
       touchedRef.current = new Set()
       setDraftPaint({})
 
-      const employeeIds = [...byEmployee.keys()]
-      const isoDates = [...new Set([...byEmployee.values()].flat())]
-      // Every touched cell was painted the same status, so one bulkMark call
-      // covers the whole drag regardless of how many cells it crossed.
-      void bulkMark(employeeIds, isoDates, status)
+      void markCells(cells, status)
     }
     window.addEventListener('mouseup', commit)
     return () => window.removeEventListener('mouseup', commit)
-  }, [bulkMark])
+  }, [markCells])
 
   if (!company) return <p className="font-mono text-xs text-ink-3">No company selected.</p>
 
@@ -174,6 +195,18 @@ export default function AttendancePage() {
             value={totalExceptions || '—'}
             tone={totalExceptions ? 'vermillion' : undefined}
           />
+          <button
+            className="btn-secondary"
+            disabled={undoDepth === 0}
+            onClick={() => void undo()}
+            title={
+              undoDepth
+                ? `Undo the last change (${undoDepth} available) · Ctrl+Z`
+                : 'Nothing to undo'
+            }
+          >
+            Undo{undoDepth > 0 && <span className="tnum ml-1 text-ink-4">{undoDepth}</span>}
+          </button>
           <button className="btn-secondary" onClick={() => setConfirmingClear(true)}>
             Clear month
           </button>
@@ -183,7 +216,7 @@ export default function AttendancePage() {
       {confirmingClear && (
         <ConfirmDialog
           title={`Clear ${MONTH_NAMES[month - 1]} ${year}?`}
-          body={`Every exception recorded for ${staff.length} employees this month will be wiped and reset to present. This cannot be undone.`}
+          body={`Every exception recorded for ${staff.length} employees this month will be wiped and reset to present. Undo can bring it back, but only while this month's history is still held.`}
           confirmLabel="Clear the month"
           onCancel={() => setConfirmingClear(false)}
           onConfirm={() => {
@@ -328,6 +361,7 @@ export default function AttendancePage() {
         </span>
         <span className="ml-auto normal-case tracking-normal text-ink-4">
           Click a cell to cycle it, or press and drag across several to paint them all at once.
+          Ctrl+Z undoes the last change, a whole drag at a time.
           Paid leave counts as an absence but is credited back — it earns no tiffin.
         </span>
       </div>

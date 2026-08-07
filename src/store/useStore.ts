@@ -60,6 +60,8 @@ interface StoreState {
   attendanceMonth: { year: number; month: number } | null
   /** Marks queued but not yet accepted by the server. 0 means everything saved. */
   unsavedMarks: number
+  /** How many moves can still be walked back. */
+  undoDepth: number
 
   init: () => Promise<void>
 
@@ -67,8 +69,13 @@ interface StoreState {
   loadCompanyData: (silent?: boolean) => Promise<void>
   loadAttendance: (year: number, month: number) => Promise<void>
   setMark: (employeeId: string, iso: string, status: AttendanceStatus) => Promise<void>
+  /** Cartesian: every employee against every date. Correct only for Clear month. */
   bulkMark: (employeeIds: string[], isoDates: string[], status: AttendanceStatus) => Promise<void>
-  queueMarks: (rows: PendingMark[], announce: boolean) => Promise<void>
+  /** Exactly the cells named — what a drag across the grid must use. */
+  markCells: (cells: { employeeId: string; iso: string }[], status: AttendanceStatus) => Promise<void>
+  queueMarks: (rows: PendingMark[], announce: boolean, record?: boolean) => Promise<void>
+  /** Walk back the last gesture. One click or one drag = one move. */
+  undo: () => Promise<void>
   /** Retry the queue now — used on reconnect and by the "retry" affordance. */
   flushMarks: () => Promise<void>
 
@@ -117,7 +124,65 @@ const key = (employeeId: string, iso: string) => `${employeeId}|${iso}`
  */
 const OUTBOX_KEY = 'salary-tracker.outbox.v1'
 
-type PendingMark = { employee_id: string; marked_on: string; status: AttendanceStatus }
+/**
+ * A queued change to one cell. `status: null` means "no mark at all" — the row
+ * is deleted rather than written. Undoing the first mark ever made on a day
+ * has to restore genuine emptiness, which no status value can represent.
+ */
+type PendingMark = {
+  employee_id: string
+  marked_on: string
+  status: AttendanceStatus | null
+}
+
+/* ------------------------------------------------------------------ undo --
+ *
+ * One move is one gesture: a click is a move, and a drag across forty cells is
+ * also one move, because that is how it was meant and how it should come back.
+ *
+ * History is kept for the whole session, or the last ten moves, whichever
+ * reaches further back — so a session that has only just started can still
+ * undo what was done before the tab was reopened. It is stored beside the
+ * outbox and survives a reload for the same reason the outbox does.
+ *
+ * An undo is applied through the same queue as an ordinary mark, so it is just
+ * as durable: nothing is "undone" only on screen.
+ */
+const UNDO_KEY = 'salary-tracker.undo.v1'
+const UNDO_MIN_MOVES = 10
+/** A hard ceiling so a very long day cannot fill localStorage. */
+const UNDO_MAX_MOVES = 400
+
+type MoveCell = {
+  employee_id: string
+  marked_on: string
+  before: AttendanceStatus | null
+  after: AttendanceStatus | null
+}
+type Move = { at: number; cells: MoveCell[] }
+
+const sessionStartedAt = Date.now()
+let undoStack: Move[] = []
+
+function readUndo(): Move[] {
+  try {
+    const raw = localStorage.getItem(UNDO_KEY)
+    return raw ? (JSON.parse(raw) as Move[]) : []
+  } catch {
+    return []
+  }
+}
+
+function persistUndo(): void {
+  try {
+    const fromThisSession = undoStack.filter((m) => m.at >= sessionStartedAt).length
+    const keep = Math.min(Math.max(UNDO_MIN_MOVES, fromThisSession), UNDO_MAX_MOVES)
+    undoStack = undoStack.slice(-keep)
+    localStorage.setItem(UNDO_KEY, JSON.stringify(undoStack))
+  } catch {
+    /* storage unavailable — undo still works for this session, in memory. */
+  }
+}
 
 let outbox = new Map<string, PendingMark>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
@@ -197,6 +262,33 @@ function persistOutbox(settled?: Set<string>): void {
 }
 
 /**
+ * Send a set of queued changes, splitting them by what they mean: rows to
+ * write, and rows to remove because the cell went back to having no mark.
+ */
+async function sendMarks(marks: PendingMark[]): Promise<{ error: { message: string } | null }> {
+  const writes = marks.filter((m) => m.status !== null)
+  const clears = marks.filter((m) => m.status === null)
+
+  if (writes.length) {
+    const { error } = await supabase
+      .from('salary_attendance')
+      .upsert(writes, { onConflict: 'employee_id,marked_on' })
+    if (error) return { error }
+  }
+
+  if (clears.length) {
+    // PostgREST has no composite IN, so the pairs go through an `or` filter.
+    const filter = clears
+      .map((m) => `and(employee_id.eq.${m.employee_id},marked_on.eq.${m.marked_on})`)
+      .join(',')
+    const { error } = await supabase.from('salary_attendance').delete().or(filter)
+    if (error) return { error }
+  }
+
+  return { error: null }
+}
+
+/**
  * Push the whole queue at the server in one upsert.
  *
  * Returns true when the queue drained. Entries are removed only if they were
@@ -224,12 +316,7 @@ async function flushOutbox(set: (partial: Partial<StoreState>) => void): Promise
   }
 
   try {
-    const { error } = await supabase
-      .from('salary_attendance')
-      .upsert(
-        batch.map(([, m]) => m),
-        { onConflict: 'employee_id,marked_on' },
-      )
+    const { error } = await sendMarks(batch.map(([, m]) => m))
 
     if (error) {
       consecutiveFailures++
@@ -244,9 +331,7 @@ async function flushOutbox(set: (partial: Partial<StoreState>) => void): Promise
         const accepted: [string, PendingMark][] = []
         let lastError = error.message
         for (const entry of batch) {
-          const one = await supabase
-            .from('salary_attendance')
-            .upsert([entry[1]], { onConflict: 'employee_id,marked_on' })
+          const one = await sendMarks([entry[1]])
           if (one.error) lastError = one.error.message
           else accepted.push(entry)
         }
@@ -307,12 +392,14 @@ export const useStore = create<StoreState>((set, get) => ({
   attendance: {},
   attendanceMonth: null,
   unsavedMarks: 0,
+  undoDepth: 0,
 
   async init() {
     // Recover anything that was queued but never accepted — a tab closed or a
     // browser killed mid-save must not cost a day's marks.
     outbox = readOutbox()
-    set({ unsavedMarks: outbox.size })
+    undoStack = readUndo()
+    set({ unsavedMarks: outbox.size, undoDepth: undoStack.length })
     bindOutboxGuards(set)
 
     // Anything recovered from a previous session goes back to the server before
@@ -418,7 +505,10 @@ export const useStore = create<StoreState>((set, get) => ({
     // Queued marks win over the server's copy: they are newer by definition,
     // and without this a refresh landing between click and save would wipe the
     // mark off the screen and invite a second, wrong click.
-    for (const [k, pending] of outbox) map[k] = pending.status
+    for (const [k, pending] of outbox) {
+      if (pending.status === null) delete map[k]
+      else map[k] = pending.status
+    }
 
     set({ attendance: map, attendanceMonth: { year, month } })
   },
@@ -427,6 +517,10 @@ export const useStore = create<StoreState>((set, get) => ({
     await get().queueMarks([{ employee_id: employeeId, marked_on: iso, status }], false)
   },
 
+  /**
+   * Every employee against every date — a genuine rectangle. Correct for
+   * "Clear month", wrong for a drag; use `markCells` for that.
+   */
   async bulkMark(employeeIds, isoDates, status) {
     const rows = employeeIds.flatMap((employeeId) =>
       isoDates.map((marked_on) => ({ employee_id: employeeId, marked_on, status })),
@@ -434,20 +528,49 @@ export const useStore = create<StoreState>((set, get) => ({
     await get().queueMarks(rows, true)
   },
 
+  /** Exactly the cells named, and nothing else. */
+  async markCells(cells, status) {
+    await get().queueMarks(
+      cells.map((c) => ({ employee_id: c.employeeId, marked_on: c.iso, status })),
+      true,
+    )
+  },
+
   /**
    * The single door every attendance write goes through: queue first, paint
    * immediately, then flush. `announce` keeps the drag-to-paint confirmation
    * without firing a toast for every single click.
    */
-  async queueMarks(rows, announce) {
+  async queueMarks(rows, announce, record = true) {
     if (rows.length === 0) return
+
+    // Capture what each cell was before touching it, so the move can be walked
+    // back later. Recorded before the optimistic paint, never after.
+    if (record) {
+      const current = get().attendance
+      undoStack.push({
+        at: Date.now(),
+        cells: rows.map((r) => ({
+          employee_id: r.employee_id,
+          marked_on: r.marked_on,
+          before: current[key(r.employee_id, r.marked_on)] ?? null,
+          after: r.status,
+        })),
+      })
+      persistUndo()
+      set({ undoDepth: undoStack.length })
+    }
 
     for (const row of rows) outbox.set(key(row.employee_id, row.marked_on), row)
     persistOutbox()
 
     set((s) => {
       const next = { ...s.attendance }
-      for (const row of rows) next[key(row.employee_id, row.marked_on)] = row.status
+      for (const row of rows) {
+        const k = key(row.employee_id, row.marked_on)
+        if (row.status === null) delete next[k]
+        else next[k] = row.status
+      }
       return { attendance: next, unsavedMarks: outbox.size }
     })
 
@@ -455,6 +578,26 @@ export const useStore = create<StoreState>((set, get) => ({
     if (saved && announce) {
       toast.ok(`${rows.length} mark${rows.length === 1 ? '' : 's'} saved`)
     }
+  },
+
+  async undo() {
+    const move = undoStack.pop()
+    if (!move) return
+    persistUndo()
+    set({ undoDepth: undoStack.length })
+
+    // Replayed through the outbox like any other change, and not recorded, so
+    // undo cannot undo itself.
+    await get().queueMarks(
+      move.cells.map((c) => ({
+        employee_id: c.employee_id,
+        marked_on: c.marked_on,
+        status: c.before,
+      })),
+      false,
+      false,
+    )
+    toast.ok(`Undid ${move.cells.length} mark${move.cells.length === 1 ? '' : 's'}`)
   },
 
   async flushMarks() {
