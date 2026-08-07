@@ -123,6 +123,47 @@ let outbox = new Map<string, PendingMark>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 let flushBackoffMs = 1000
 let flushing = false
+let consecutiveFailures = 0
+let outboxListenersBound = false
+
+/**
+ * Guard the ways a browser takes the page away.
+ *
+ * A queued mark is already durable — it reached localStorage synchronously
+ * before any network call, so reopening the app resends it. These handlers
+ * shorten the window rather than create the guarantee: flush when the tab is
+ * hidden, because phones freeze and kill background tabs without warning; and
+ * if marks are still unsent when the page is closing, say so rather than let
+ * them leave believing the register is up to date.
+ */
+function bindOutboxGuards(set: (partial: Partial<StoreState>) => void): void {
+  if (outboxListenersBound || typeof window === 'undefined') return
+  outboxListenersBound = true
+
+  const flushNow = () => {
+    if (outbox.size) void flushOutbox(set)
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushNow()
+    else flushNow() // returning to the tab is also the moment to catch up
+  })
+  window.addEventListener('pagehide', flushNow)
+  window.addEventListener('online', flushNow)
+
+  window.addEventListener('beforeunload', (e) => {
+    if (outbox.size === 0) return
+    e.preventDefault()
+    e.returnValue = ''
+  })
+
+  // Another tab saved or queued something: adopt the merged truth on disk.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== OUTBOX_KEY) return
+    outbox = readOutbox()
+    set({ unsavedMarks: outbox.size })
+  })
+}
 
 function readOutbox(): Map<string, PendingMark> {
   try {
@@ -136,9 +177,20 @@ function readOutbox(): Map<string, PendingMark> {
   }
 }
 
-function persistOutbox(): void {
+/**
+ * Write the queue to disk, merging with whatever is already there.
+ *
+ * A plain overwrite loses marks: two tabs open on the same machine each hold
+ * their own in-memory queue but share one localStorage key, so whichever tab
+ * wrote last would erase the other's pending marks. Only keys this tab has
+ * just seen the server accept — `settled` — are allowed to disappear.
+ */
+function persistOutbox(settled?: Set<string>): void {
   try {
-    localStorage.setItem(OUTBOX_KEY, JSON.stringify([...outbox.values()]))
+    const merged = readOutbox()
+    if (settled) for (const k of settled) merged.delete(k)
+    for (const [k, m] of outbox) merged.set(k, m)
+    localStorage.setItem(OUTBOX_KEY, JSON.stringify([...merged.values()]))
   } catch {
     /* private mode / quota — the in-memory queue still retries this session. */
   }
@@ -154,7 +206,22 @@ function persistOutbox(): void {
 async function flushOutbox(set: (partial: Partial<StoreState>) => void): Promise<boolean> {
   if (outbox.size === 0 || flushing) return outbox.size === 0
   flushing = true
+
+  // Pick up anything a second tab queued while this one was idle.
+  for (const [k, m] of readOutbox()) if (!outbox.has(k)) outbox.set(k, m)
   const batch = [...outbox.entries()]
+
+  /** Retire the rows the server took; anything re-marked mid-flight stays. */
+  const settle = (accepted: [string, PendingMark][]) => {
+    const keys = new Set<string>()
+    for (const [k, sent] of accepted) {
+      if (outbox.get(k) === sent) {
+        outbox.delete(k)
+        keys.add(k)
+      }
+    }
+    persistOutbox(keys)
+  }
 
   try {
     const { error } = await supabase
@@ -165,21 +232,47 @@ async function flushOutbox(set: (partial: Partial<StoreState>) => void): Promise
       )
 
     if (error) {
+      consecutiveFailures++
+      /*
+       * A batch upsert is all-or-nothing, so one permanently bad row — an
+       * employee deleted on another device, say — would fail every retry and
+       * take every later mark down with it, and the queue would never drain.
+       * After a few whole-batch failures, send them one at a time so the good
+       * marks land and only the genuinely broken row stays behind.
+       */
+      if (consecutiveFailures >= 3 && batch.length > 1) {
+        const accepted: [string, PendingMark][] = []
+        let lastError = error.message
+        for (const entry of batch) {
+          const one = await supabase
+            .from('salary_attendance')
+            .upsert([entry[1]], { onConflict: 'employee_id,marked_on' })
+          if (one.error) lastError = one.error.message
+          else accepted.push(entry)
+        }
+        settle(accepted)
+        set({
+          unsavedMarks: outbox.size,
+          error: outbox.size ? `${outbox.size} mark(s) rejected: ${lastError}` : null,
+        })
+        if (outbox.size) scheduleFlush(set)
+        return outbox.size === 0
+      }
+
       set({ unsavedMarks: outbox.size, error: error.message })
       scheduleFlush(set)
       return false
     }
 
-    for (const [k, sent] of batch) {
-      if (outbox.get(k) === sent) outbox.delete(k)
-    }
-    persistOutbox()
+    settle(batch)
     flushBackoffMs = 1000
+    consecutiveFailures = 0
     set({ unsavedMarks: outbox.size, error: null })
     return outbox.size === 0
   } catch (err) {
     // Offline throws rather than returning an error — same treatment: keep the
     // queue, keep the marks on screen, try again shortly.
+    consecutiveFailures++
     set({ unsavedMarks: outbox.size, error: (err as Error).message })
     scheduleFlush(set)
     return false
@@ -220,6 +313,11 @@ export const useStore = create<StoreState>((set, get) => ({
     // browser killed mid-save must not cost a day's marks.
     outbox = readOutbox()
     set({ unsavedMarks: outbox.size })
+    bindOutboxGuards(set)
+
+    // Anything recovered from a previous session goes back to the server before
+    // the register is read, so the screen never shows a stale "absent".
+    await flushOutbox(set)
 
     // No login: the app talks to Supabase as the anon role and loads straight in.
     await get().loadCompanyData()
