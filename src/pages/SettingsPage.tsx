@@ -38,12 +38,12 @@ export default function SettingsPage() {
     <div className="grid max-w-4xl grid-cols-[minmax(0,1fr)] gap-6 [&>section]:min-w-0">
       {/* ------------------------------------------------------ the entity */}
       <section className="rise space-y-2">
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Entity</span>
-        </div>
+        </h2>
         <div className="leaf p-5">
           <h3 className="font-display text-2xl leading-tight">{company.name}</h3>
-          <p className="mt-1 font-mono text-[11px] text-ink-3">{company.address_line}</p>
+          <p className="mt-1 font-mono text-[0.6875rem] text-ink-3">{company.address_line}</p>
 
           <dl className="mt-4 grid gap-x-10 sm:grid-cols-2">
             <Row label="Remitter name" value={company.remitter_name} />
@@ -87,7 +87,7 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <p className="mt-3 text-[13px] text-ink-2">
+          <p className="mt-3 text-[0.8125rem] text-ink-2">
             Both are printed on the Form M pay register. A blank one prints the empty ruled line,
             as on the original register.
           </p>
@@ -96,9 +96,9 @@ export default function SettingsPage() {
 
       {/* -------------------------------------------------- how pay is struck */}
       <section className="rise space-y-2" style={{ animationDelay: '70ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>How pay is struck</span>
-        </div>
+        </h2>
 
         <div className="leaf divide-y divide-rule">
           <div className="p-5">
@@ -108,7 +108,7 @@ export default function SettingsPage() {
                 <button
                   key={basis}
                   onClick={() => void save({ pay_divisor_basis: basis })}
-                  className={`-ml-px border px-4 py-2 font-mono text-[11px] uppercase
+                  className={`-ml-px border px-4 py-2 font-mono text-[0.6875rem] uppercase
                     tracking-[.13em] transition-colors first:ml-0 first:rounded-l-[3px]
                     last:rounded-r-[3px] ${
                       company.pay_divisor_basis === basis
@@ -120,7 +120,7 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
-            <p className="mt-3 max-w-prose text-[13px] leading-relaxed text-ink-2">
+            <p className="mt-3 max-w-prose text-[0.8125rem] leading-relaxed text-ink-2">
               Your workbooks have always divided by calendar days while counting absence and
               tiffin on working days. Moving to working days raises the per-day rate, so the same
               absence costs the employee more. Months already approved are never recalculated.
@@ -135,7 +135,7 @@ export default function SettingsPage() {
               defaultValue={company.tiffin_rate}
               onBlur={(e) => void save({ tiffin_rate: Number(e.target.value) })}
             />
-            <p className="mt-3 text-[13px] text-ink-2">
+            <p className="mt-3 text-[0.8125rem] text-ink-2">
               Currently {rupees(company.tiffin_rate)}/day, applied only to employees marked
               tiffin-eligible.
             </p>
@@ -150,7 +150,7 @@ export default function SettingsPage() {
                   <button
                     key={name}
                     onClick={() => toggleOff(day)}
-                    className={`-ml-px border px-3.5 py-2 font-mono text-[11px] uppercase
+                    className={`-ml-px border px-3.5 py-2 font-mono text-[0.6875rem] uppercase
                       tracking-[.13em] transition-colors first:ml-0 first:rounded-l-[3px]
                       last:rounded-r-[3px] ${
                         off
@@ -173,7 +173,7 @@ export default function SettingsPage() {
                   <button
                     key={value}
                     onClick={() => void save({ round_rule: value })}
-                    className={`-ml-px border px-4 py-2 font-mono text-[11px] uppercase
+                    className={`-ml-px border px-4 py-2 font-mono text-[0.6875rem] uppercase
                       tracking-[.13em] transition-colors first:ml-0 first:rounded-l-[3px]
                       last:rounded-r-[3px] ${
                         company.round_rule === value
@@ -185,7 +185,7 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
-              <span className="font-mono text-[10px] uppercase tracking-[.1em] text-ink-4">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-4">
                 to nearest
               </span>
               <select
@@ -197,7 +197,7 @@ export default function SettingsPage() {
                 <option value={10}>Ten rupees</option>
               </select>
             </div>
-            <p className="mt-3 max-w-prose text-[13px] text-ink-2">
+            <p className="mt-3 max-w-prose text-[0.8125rem] text-ink-2">
               Applied to the final payable amount before it reaches the bank file.{' '}
               <span className="font-medium">Round up</span> to the rupee is the historical
               behaviour — the workbooks never shorted an employee by rounding down. Months already
@@ -213,7 +213,7 @@ export default function SettingsPage() {
               defaultValue={company.min_neft_rows}
               onBlur={(e) => void save({ min_neft_rows: Number(e.target.value) })}
             />
-            <p className="mt-3 max-w-prose text-[13px] text-ink-2">
+            <p className="mt-3 max-w-prose text-[0.8125rem] text-ink-2">
               HDFC rejects a bulk upload with fewer transactions than this, so payments are split
               across rows to reach it.
             </p>
@@ -230,7 +230,7 @@ export default function SettingsPage() {
                 if (v > 0) void save({ neft_split_chunk: v })
               }}
             />
-            <p className="mt-3 max-w-prose text-[13px] text-ink-2">
+            <p className="mt-3 max-w-prose text-[0.8125rem] text-ink-2">
               A payment above this is peeled off in chunks of this size to help reach the row
               minimum — currently {rupees(company.neft_split_chunk)} at a time, matching the cuts
               in the original bank files.
@@ -241,12 +241,12 @@ export default function SettingsPage() {
 
       {/* -------------------------------------------------------- holidays */}
       <section className="rise space-y-2" style={{ animationDelay: '110ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Holidays</span>
           <span className="ml-auto normal-case tracking-normal text-ink-4">
             {company.code} · reduces working days, so absence and tiffin cost less
           </span>
-        </div>
+        </h2>
         <HolidayEditor
           holidays={companyHolidays}
           onAdd={addHoliday}
@@ -256,12 +256,12 @@ export default function SettingsPage() {
 
       {/* ------------------------------------------------------------ p-tax */}
       <section className="rise space-y-2" style={{ animationDelay: '170ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Profession tax</span>
           <span className="ml-auto normal-case tracking-normal text-ink-4">
             {company.code} · charged on the month's actual gross
           </span>
-        </div>
+        </h2>
         <PtaxEditor
           slabs={company.ptax_slabs}
           onSave={(ptax_slabs) => save({ ptax_slabs })}
@@ -369,7 +369,7 @@ function PtaxEditor({
                 </td>
                 <td className="td text-right">
                   {last ? (
-                    <span className="font-mono text-[10px] uppercase tracking-[.1em] text-ink-4">
+                    <span className="font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-4">
                       and above
                     </span>
                   ) : (
@@ -448,7 +448,7 @@ function PtaxEditor({
       </div>
 
       {errors.length > 0 && (
-        <ul className="border-t border-vermillion/30 bg-vermillion-wash px-4 py-3 text-[13px]
+        <ul className="border-t border-vermillion/30 bg-vermillion-wash px-4 py-3 text-[0.8125rem]
                        text-vermillion-deep">
           {errors.map((e, i) => (
             <li key={i}>{e}</li>
@@ -457,14 +457,14 @@ function PtaxEditor({
       )}
 
       {overCap && errors.length === 0 && (
-        <p className="border-t border-ochre/40 bg-ochre-wash px-4 py-3 text-[13px] text-ink-2">
+        <p className="border-t border-ochre/40 bg-ochre-wash px-4 py-3 text-[0.8125rem] text-ink-2">
           The top band works out to <span className="tnum">{rupees(annualMax)}</span> a year.
           Article 276 caps profession tax at <span className="tnum">₹2,500</span> a year, so this
           cannot lawfully be deducted for all twelve months.
         </p>
       )}
 
-      <p className="max-w-prose border-t border-rule p-4 text-[13px] leading-relaxed text-ink-2">
+      <p className="max-w-prose border-t border-rule p-4 text-[0.8125rem] leading-relaxed text-ink-2">
         Bands are contiguous — each one starts where the previous ends, and the last is
         open-ended, so no level of gross is left uncovered. Slabs apply to future runs only;
         months already approved keep the tax they were struck with.
@@ -504,7 +504,7 @@ function HolidayEditor({
   return (
     <div className="leaf overflow-hidden">
       {holidays.length === 0 ? (
-        <p className="p-5 text-[13px] text-ink-3">No holidays recorded for this company yet.</p>
+        <p className="p-5 text-[0.8125rem] text-ink-3">No holidays recorded for this company yet.</p>
       ) : (
         <ul>
           {holidays.map((h) => (
@@ -552,8 +552,8 @@ function HolidayEditor({
 function Row({ label, value, num }: { label: string; value: string; num?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
-      <dt className="font-mono text-[10px] uppercase tracking-[.1em] text-ink-3">{label}</dt>
-      <dd className={num ? 'tnum text-[13px]' : 'text-[13px]'}>{value}</dd>
+      <dt className="font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">{label}</dt>
+      <dd className={num ? 'tnum text-[0.8125rem]' : 'text-[0.8125rem]'}>{value}</dd>
     </div>
   )
 }

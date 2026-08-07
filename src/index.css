@@ -31,7 +31,12 @@
 
   body {
     @apply bg-paper font-sans text-ink;
-    font-size: 15px;
+    /*
+      rem, not px: the register is full of 10-11px small caps, and at a fixed
+      pixel size none of it grows when someone raises their browser's text
+      size. Keying the whole scale off the root lets the page reflow instead.
+    */
+    font-size: 0.9375rem;
   }
 
   /* Grain sits above the background, below everything else. */
@@ -95,7 +100,7 @@
   /* Section heading: small caps over a rule, as in a ruled account book. */
   .rubric {
     @apply flex items-baseline gap-3 border-b border-rule pb-1.5 font-mono
-           text-[11px] font-medium uppercase tracking-stamp text-ink-3;
+           text-[0.6875rem] font-medium uppercase tracking-stamp text-ink-3;
   }
 
   /* ------------------------------------------------------------- stamps */
@@ -106,7 +111,7 @@
   */
   .stamp {
     @apply inline-flex items-center rounded-[2px] border-2 px-2 py-0.5 font-mono
-           text-[10px] font-semibold uppercase tracking-stamp;
+           text-[0.625rem] font-semibold uppercase tracking-stamp;
     box-shadow: inset 0 0 0 1px currentColor;
     transform: rotate(-4deg);
     opacity: 0.9;
@@ -124,14 +129,14 @@
   /* Flat label, no rotation — for inline metadata. */
   .tag {
     @apply inline-flex items-center rounded-[2px] px-1.5 py-0.5 font-mono
-           text-[10px] font-medium uppercase tracking-[.12em];
+           text-[0.625rem] font-medium uppercase tracking-[.12em];
   }
 
   /* ------------------------------------------------------------ controls */
 
   .btn {
     @apply inline-flex items-center gap-1.5 rounded-[3px] border px-3 py-1.5
-           font-mono text-[11px] font-medium uppercase tracking-[.1em]
+           font-mono text-[0.6875rem] font-medium uppercase tracking-[.1em]
            transition-all duration-150
            disabled:cursor-not-allowed disabled:opacity-40;
   }
@@ -154,7 +159,33 @@
   }
 
   .label {
-    @apply mb-1 block font-mono text-[10px] font-medium uppercase tracking-stamp text-ink-3;
+    @apply mb-1 block font-mono text-[0.625rem] font-medium uppercase tracking-stamp text-ink-3;
+  }
+
+  /* One day of one person's attendance — the most-tapped control in the app. */
+  .day-cell {
+    @apply h-8;
+  }
+
+  /*
+    Touch sizing, scoped to coarse pointers.
+
+    32px suits a mouse and keeps a 31-column month readable at a glance, so the
+    desk stays dense. A thumb needs more, and this grid is painted by dragging
+    across it daily — 40px is the largest step that still shows a useful span of
+    days on a phone rather than trading accuracy for scrolling.
+  */
+  @media (pointer: coarse) {
+    .day-cell {
+      min-height: 2.5rem;
+      min-width: 2.5rem;
+    }
+    .btn,
+    .input,
+    .tab-link,
+    .entity-switch {
+      min-height: 2.75rem;
+    }
   }
 
   /* --------------------------------------------------------------- table */
@@ -162,7 +193,7 @@
   /* Column heads sit under a strong rule, like a ledger's ruled header. */
   .th {
     @apply whitespace-nowrap border-b border-rule-strong px-3 py-2 text-left
-           font-mono text-[10px] font-medium uppercase tracking-[.13em] text-ink-3;
+           font-mono text-[0.625rem] font-medium uppercase tracking-[.13em] text-ink-3;
   }
 
   /* Every row is a ruled line. */
@@ -193,6 +224,12 @@
     animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both;
   }
 
+  /*
+    Reduced motion removes the travel, not the feedback. Killing every
+    transition globally would also flatten hover, focus and the colour change
+    that confirms a mark landed — the person asked for less movement, not for
+    a UI that stops answering them.
+  */
   @media (prefers-reduced-motion: reduce) {
     .rise {
       animation: none;
@@ -200,13 +237,23 @@
     .stamp {
       transform: none;
     }
-    * {
-      transition-duration: 0.01ms !important;
-    }
   }
 }
 
 @layer utilities {
+  /* Available to a screen reader, absent from the page. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   /* Ruled-off columns — weekly offs and holidays in the attendance grid. */
   .hatch {
     background-image: repeating-linear-gradient(

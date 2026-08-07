@@ -40,15 +40,15 @@ export default function HistoryPage() {
     <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
       {/* ---------------------------------------------------------- the index */}
       <aside className="rise min-w-0 space-y-2">
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Index</span>
           <span className="ml-auto tnum normal-case tracking-normal text-ink-4">
             {runs.length}
           </span>
-        </div>
+        </h2>
 
         {runs.length === 0 && (
-          <p className="font-mono text-[11px] text-ink-3">Nothing recorded yet.</p>
+          <p className="font-mono text-[0.6875rem] text-ink-3">Nothing recorded yet.</p>
         )}
 
         <ul className="leaf overflow-hidden">
@@ -73,7 +73,7 @@ export default function HistoryPage() {
                       {MONTH_NAMES[run.month - 1]}{' '}
                       <span className="text-ink-4">{run.year}</span>
                     </span>
-                    <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[.1em] text-ink-3">
+                    <span className="mt-0.5 block font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">
                       {run.cheque_no ? `Cheque ${run.cheque_no}` : 'No cheque'}
                       {run.is_historical && ' · imported'}
                     </span>
@@ -100,7 +100,7 @@ export default function HistoryPage() {
       {/* --------------------------------------------------------- the folio */}
       <div className="min-w-0">
         {!detail && (
-          <p className="font-mono text-[11px] text-ink-3">Pick a month from the index.</p>
+          <p className="font-mono text-[0.6875rem] text-ink-3">Pick a month from the index.</p>
         )}
 
         {detail && (
@@ -118,7 +118,7 @@ export default function HistoryPage() {
                 {MONTH_NAMES[detail.run.month - 1]}{' '}
                 <span className="text-ink-4">{detail.run.year}</span>
               </h2>
-              <p className="mt-2 font-mono text-[11px] text-ink-3">
+              <p className="mt-2 font-mono text-[0.6875rem] text-ink-3">
                 {detail.run.calendar_days} calendar · {detail.run.working_days} working days ·
                 divided by {detail.run.pay_divisor_basis} days · {detail.neft.length} bank rows
               </p>
@@ -229,9 +229,9 @@ export default function HistoryPage() {
             </div>
 
             <section className="rise space-y-2" style={{ animationDelay: '80ms' }}>
-              <div className="rubric">
+              <h2 className="rubric">
                 <span>As paid</span>
-              </div>
+              </h2>
 
               <div className="leaf overflow-x-auto">
                 <table className="w-full">
@@ -292,7 +292,7 @@ export default function HistoryPage() {
                   <tfoot>
                     <tr className="rule-total">
                       <td
-                        className="td border-b-0 font-mono text-[10px] uppercase tracking-[.13em] text-ink-3"
+                        className="td border-b-0 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3"
                         colSpan={9}
                       >
                         Transferred to bank
@@ -307,7 +307,7 @@ export default function HistoryPage() {
             </section>
 
             {detail.run.notes && (
-              <p className="font-mono text-[10px] leading-relaxed text-ink-4">
+              <p className="font-mono text-[0.625rem] leading-relaxed text-ink-4">
                 {detail.run.notes}
               </p>
             )}

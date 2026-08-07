@@ -77,6 +77,16 @@ interface StoreState {
   addHoliday: (holidayOn: string, name: string) => Promise<void>
   removeHoliday: (id: string) => Promise<void>
 
+  /*
+   * Targeted refetches. Every write used to call `loadCompanyData()`, which
+   * re-reads companies, employees, holidays, runs and bonus runs — five
+   * queries and a full re-render to record one holiday. These read back only
+   * the table that actually changed.
+   */
+  refreshCompanies: () => Promise<void>
+  refreshEmployees: () => Promise<void>
+  refreshHolidays: () => Promise<void>
+
   loadRunDetail: (runId: string) => Promise<{ run: Run; lines: RunLine[]; neft: NeftRowRecord[] }>
   deleteRun: (runId: string) => Promise<void>
   refreshRuns: () => Promise<void>
@@ -364,7 +374,7 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: error.message })
       toast.fail(`Could not save employee: ${error.message}`)
     } else {
-      await get().loadCompanyData()
+      await get().refreshEmployees()
       toast.ok(`${employee.name ?? 'Employee'} saved`)
     }
   },
@@ -377,7 +387,7 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: error.message })
       toast.fail(`Could not save setting: ${error.message}`)
     } else {
-      await get().loadCompanyData()
+      await get().refreshCompanies()
       toast.ok('Setting saved')
     }
   },
@@ -411,7 +421,7 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: error.message })
       toast.fail(`Could not save holiday: ${error.message}`)
     } else {
-      await get().loadCompanyData()
+      await get().refreshHolidays()
       toast.ok('Holiday saved')
     }
   },
@@ -422,7 +432,7 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: error.message })
       toast.fail(`Could not remove holiday: ${error.message}`)
     } else {
-      await get().loadCompanyData()
+      await get().refreshHolidays()
       toast.ok('Holiday removed')
     }
   },
@@ -450,6 +460,30 @@ export const useStore = create<StoreState>((set, get) => ({
       await get().refreshRuns()
       toast.ok('Deleted')
     }
+  },
+
+  async refreshCompanies() {
+    const { data, error } = await supabase.from('salary_companies').select('*').order('code')
+    if (error) set({ error: error.message })
+    else set({ companies: (data ?? []) as Company[] })
+  },
+
+  async refreshEmployees() {
+    const id = get().activeCompanyId
+    if (!id) return
+    const { data, error } = await supabase
+      .from('salary_employees')
+      .select('*')
+      .eq('company_id', id)
+      .order('sort_order')
+    if (error) set({ error: error.message })
+    else set({ employees: (data ?? []) as Employee[] })
+  },
+
+  async refreshHolidays() {
+    const { data, error } = await supabase.from('salary_holidays').select('*')
+    if (error) set({ error: error.message })
+    else set({ holidays: (data ?? []) as Holiday[] })
   },
 
   async refreshRuns() {

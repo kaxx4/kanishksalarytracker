@@ -290,19 +290,19 @@ export default function RunPage() {
       <section className="rise leaf relative overflow-hidden p-6">
         {approved && (
           <div className="pointer-events-none absolute right-8 top-7 hidden sm:block">
-            <span className="stamp-approved !px-3 !py-1 !text-[13px]">Approved</span>
+            <span className="stamp-approved !px-3 !py-1 !text-[0.8125rem]">Approved</span>
           </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-stamp text-ink-3">
+            <div className="font-mono text-[0.625rem] uppercase tracking-stamp text-ink-3">
               Payable to bank
             </div>
             <div className="tnum mt-1 text-[3.4rem] font-medium leading-[1] text-ink">
               ₹{inr(result.totals.neftTotal)}
             </div>
-            <div className="mt-2 font-mono text-[11px] text-ink-3">
+            <div className="mt-2 font-mono text-[0.6875rem] text-ink-3">
               {MONTH_NAMES[month - 1]} {year} · {result.calendarDays} calendar ·{' '}
               {result.workingDays} working days
             </div>
@@ -381,12 +381,12 @@ export default function RunPage() {
 
       {/* ----------------------------------------------------------- the roll */}
       <section className="rise space-y-2" style={{ animationDelay: '90ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Statement of pay</span>
           <span className="ml-auto normal-case tracking-normal text-ink-4">
             Amber cells are edited by hand
           </span>
-        </div>
+        </h2>
 
         <div className="leaf overflow-x-auto">
           <table className="w-full">
@@ -463,7 +463,7 @@ export default function RunPage() {
                     <td className="td">
                       <select
                         className="rounded-[2px] border border-transparent bg-transparent px-1 py-0.5
-                                   font-mono text-[10px] uppercase tracking-[.1em] text-ink-3
+                                   font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3
                                    hover:border-rule-strong focus:border-vermillion"
                         value={line.payMode}
                         onChange={(e) =>
@@ -482,7 +482,7 @@ export default function RunPage() {
             <tfoot>
               <tr className="rule-total">
                 <td
-                  className="td border-b-0 font-mono text-[10px] uppercase tracking-[.13em] text-ink-3"
+                  className="td border-b-0 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3"
                   colSpan={5}
                 >
                   Total
@@ -505,7 +505,7 @@ export default function RunPage() {
 
       {/* --------------------------------------------------------- bank file */}
       <section className="rise space-y-2" style={{ animationDelay: '150ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Bank file</span>
           <span
             className={`tag ${
@@ -519,7 +519,7 @@ export default function RunPage() {
           <span className="ml-auto normal-case tracking-normal text-ink-4">
             HDFC rejects a bulk upload below {company.min_neft_rows} transactions
           </span>
-        </div>
+        </h2>
 
         <div className="leaf p-4">
           <ol className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -531,12 +531,12 @@ export default function RunPage() {
                   key={i}
                   className="flex items-baseline gap-3 border-b border-rule py-1.5 last:border-b-0"
                 >
-                  <span className="tnum w-5 text-right font-mono text-[10px] text-ink-4">
+                  <span className="tnum w-5 text-right font-mono text-[0.625rem] text-ink-4">
                     {i + 1}
                   </span>
                   <span className="truncate text-sm">
                     {row.beneficiaryName}
-                    {isSplit && <span className="ml-1.5 text-[10px] text-ochre">split</span>}
+                    {isSplit && <span className="ml-1.5 text-[0.625rem] text-ochre">split</span>}
                   </span>
                   <span className="tnum ml-auto text-sm">{inr(row.amount)}</span>
                 </li>
@@ -545,7 +545,7 @@ export default function RunPage() {
           </ol>
 
           <div className="rule-total mt-3 flex flex-wrap items-center gap-3 pt-3">
-            <span className="font-mono text-[10px] uppercase tracking-[.13em] text-ink-3">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3">
               File total
             </span>
             <span className="tnum text-lg font-semibold">₹{inr(fileTotal)}</span>
@@ -590,14 +590,14 @@ export default function RunPage() {
 
       {/* ------------------------------------------------------------- issue */}
       <section className="rise space-y-2" style={{ animationDelay: '200ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Issue</span>
           {savedAt && (
             <span className="ml-auto normal-case tracking-normal text-verdigris">
               Saved {savedAt}
             </span>
           )}
-        </div>
+        </h2>
 
         <div className="leaf flex flex-wrap items-center gap-2 p-4">
           <button
@@ -768,7 +768,7 @@ function Note({
     quiet: 'border-l-rule-strong bg-paper-raised text-ink-2',
   }[tone]
   return (
-    <p className={`border border-paper-edge border-l-[3px] px-4 py-2.5 text-[13px] ${styles}`}>
+    <p className={`border border-paper-edge border-l-[3px] px-4 py-2.5 text-[0.8125rem] ${styles}`}>
       {children}
     </p>
   )

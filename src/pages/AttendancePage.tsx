@@ -210,9 +210,13 @@ export default function AttendancePage() {
         style={{ animationDelay: '80ms' }}
       >
         <table className="w-max min-w-full border-separate border-spacing-0">
+          <caption className="sr-only">
+            Daily attendance for {MONTH_NAMES[month - 1]} {year}. Employees down the rows,
+            days of the month across the columns. Each cell cycles present, absent, paid leave.
+          </caption>
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="th sticky left-0 z-30 w-[200px] min-w-[200px] border-r
+              <th scope="col" className="th sticky left-0 z-30 w-[200px] min-w-[200px] border-r
                              border-rule bg-paper-raised">
                 Employee
               </th>
@@ -220,22 +224,23 @@ export default function AttendancePage() {
               {days.map((d) => (
                 <th
                   key={d.iso}
+                  scope="col"
                   title={d.isHoliday ? 'Holiday' : d.isWeeklyOff ? 'Weekly off' : d.iso}
                   className={`min-w-[32px] border-b border-rule-strong bg-paper-raised px-0 py-1.5
-                    text-center font-mono text-[10px] font-medium ${
+                    text-center font-mono text-[0.625rem] font-medium ${
                       d.isWorking ? 'text-ink-3' : 'text-ink-4'
                     }`}
                 >
                   <div className="tnum">{d.day}</div>
-                  <div className="font-normal opacity-60">{d.label}</div>
+                  <div className="font-normal opacity-60" aria-hidden="true">{d.label}</div>
                 </th>
               ))}
 
-              <th className="th sticky right-[68px] z-30 w-[68px] min-w-[68px] border-l
+              <th scope="col" className="th sticky right-[68px] z-30 w-[68px] min-w-[68px] border-l
                              border-rule bg-paper-raised text-right">
                 Abs
               </th>
-              <th className="th sticky right-0 z-30 w-[68px] min-w-[68px] bg-paper-raised
+              <th scope="col" className="th sticky right-0 z-30 w-[68px] min-w-[68px] bg-paper-raised
                              text-right">
                 Lv
               </th>
@@ -247,10 +252,10 @@ export default function AttendancePage() {
               const derived = derivedAll[employee.id]
               return (
                 <tr key={employee.id} className="rise" style={{ animationDelay: `${120 + i * 35}ms` }}>
-                  <td className="td sticky left-0 z-10 w-[200px] min-w-[200px] border-r
-                                 border-rule bg-paper-raised font-medium">
+                  <th scope="row" className="td sticky left-0 z-10 w-[200px] min-w-[200px] border-r
+                                 border-rule bg-paper-raised text-left font-medium">
                     {employee.name}
-                  </td>
+                  </th>
 
                   {days.map((d) => {
                     if (!d.isWorking) {
@@ -271,12 +276,15 @@ export default function AttendancePage() {
                           }}
                           onMouseEnter={(e) => continuePaint(employee.id, d.iso, e.buttons === 1)}
                           title={`${employee.name} · ${d.iso} · ${ATTENDANCE_LABELS[status]}`}
-                          className={`h-8 w-full select-none font-mono text-[11px] font-semibold
-                                      transition-colors ${mark.cls} ${
+                          aria-label={`${employee.name}, ${d.day} ${MONTH_NAMES[month - 1]}: ${
+                            ATTENDANCE_LABELS[status]
+                          }`}
+                          className={`day-cell w-full select-none font-mono text-[0.6875rem]
+                                      font-semibold transition-colors ${mark.cls} ${
                                         painting ? 'ring-2 ring-inset ring-ink/40' : ''
                                       }`}
                         >
-                          {mark.glyph}
+                          <span aria-hidden="true">{mark.glyph}</span>
                         </button>
                       </td>
                     )
@@ -302,13 +310,13 @@ export default function AttendancePage() {
       </div>
 
       {/* ----------------------------------------------------------- legend */}
-      <div className="rise flex flex-wrap items-center gap-x-7 gap-y-2 font-mono text-[10px]
+      <div className="rise flex flex-wrap items-center gap-x-7 gap-y-2 font-mono text-[0.625rem]
                       uppercase tracking-[.1em] text-ink-3"
            style={{ animationDelay: '260ms' }}>
         {(['present', 'absent', 'paid_leave'] as AttendanceStatus[]).map((s) => (
           <span key={s} className="inline-flex items-center gap-2">
             <span className={`grid h-5 w-5 place-items-center rounded-[2px] border border-rule
-                              text-[11px] font-semibold ${MARK[s].cls}`}>
+                              text-[0.6875rem] font-semibold ${MARK[s].cls}`}>
               {MARK[s].glyph}
             </span>
             {ATTENDANCE_LABELS[s]}
@@ -337,7 +345,7 @@ function Figure({
 }) {
   return (
     <div>
-      <div className="font-mono text-[10px] uppercase tracking-stamp text-ink-3">{label}</div>
+      <div className="font-mono text-[0.625rem] uppercase tracking-stamp text-ink-3">{label}</div>
       <div
         className={`tnum text-2xl leading-tight ${
           tone === 'vermillion' ? 'text-vermillion' : accent ? 'text-ink' : 'text-ink-2'

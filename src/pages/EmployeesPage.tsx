@@ -64,15 +64,15 @@ export default function EmployeesPage() {
                     title={mismatch ? 'Differs from the salary-sheet name' : undefined}
                   >
                     {e.beneficiary_name}
-                    {mismatch && <span className="ml-1.5 text-[10px]">≠</span>}
+                    {mismatch && <span className="ml-1.5 text-[0.625rem]">≠</span>}
                   </td>
                   <td className="td tnum text-right">{inr(e.monthly_pay)}</td>
-                  <td className="td font-mono text-[10px] uppercase tracking-[.1em] text-ink-3">
+                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">
                     {e.tiffin_eligible ? 'Auto' : '—'}
                   </td>
-                  <td className="td font-mono text-[11px] text-ink-2">{e.bank_ifsc || '—'}</td>
-                  <td className="td tnum text-[11px] text-ink-2">{e.bank_account_no || '—'}</td>
-                  <td className="td font-mono text-[10px] uppercase tracking-[.1em] text-ink-3">
+                  <td className="td font-mono text-[0.6875rem] text-ink-2">{e.bank_ifsc || '—'}</td>
+                  <td className="td tnum text-[0.6875rem] text-ink-2">{e.bank_account_no || '—'}</td>
+                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">
                     {e.default_pay_mode === 'excluded' ? 'off run' : e.default_pay_mode}
                   </td>
                   <td className="td text-right">
@@ -89,7 +89,7 @@ export default function EmployeesPage() {
         </table>
       </div>
 
-      <p className="font-mono text-[10px] leading-relaxed text-ink-4">
+      <p className="font-mono text-[0.625rem] leading-relaxed text-ink-4">
         Names marked <span className="text-ochre">≠</span> differ between the salary sheet and the
         bank's records. The bank file always carries the beneficiary name.
       </p>
@@ -227,7 +227,7 @@ function EmployeeDialog({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-4 text-[13px]">
+        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-4 text-[0.8125rem]">
           <Toggle
             checked={!!form.tiffin_eligible}
             onChange={(v) => set({ tiffin_eligible: v })}

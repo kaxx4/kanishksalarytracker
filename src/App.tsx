@@ -65,7 +65,7 @@ function Toaster() {
           key={t.id}
           onClick={() => dismiss(t.id)}
           className={`rise flex max-w-sm items-center gap-2.5 border px-4 py-2.5 text-left
-                      text-[13px] shadow-lift transition-opacity hover:opacity-90 ${
+                      text-[0.8125rem] shadow-lift transition-opacity hover:opacity-90 ${
                         t.kind === 'success'
                           ? 'border-verdigris/40 bg-paper-raised text-ink-2'
                           : 'border-vermillion/50 bg-vermillion-wash text-vermillion-deep'
@@ -87,7 +87,7 @@ function Opening() {
   return (
     <div className="grid min-h-screen place-items-center">
       <div className="rise text-center">
-        <div className="font-mono text-[10px] uppercase tracking-stamp text-ink-3">
+        <div className="font-mono text-[0.625rem] uppercase tracking-stamp text-ink-3">
           Opening the register
         </div>
         <div className="mt-2 font-display text-3xl italic text-ink-4">Salary Tracker</div>
@@ -105,13 +105,13 @@ function Masthead() {
     <header className="mx-auto max-w-[1440px] overflow-hidden px-6 pt-7">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="rise">
-          <div className="font-mono text-[10px] uppercase tracking-stamp text-verdigris">
+          <div className="font-mono text-[0.625rem] uppercase tracking-stamp text-verdigris">
             Salary&nbsp;Register
           </div>
           <h1 className="mt-1.5 font-display text-[2rem] leading-[1.05] tracking-[-0.015em] sm:text-[2.6rem]">
             {company?.name ?? '—'}
           </h1>
-          <p className="mt-1.5 font-mono text-[11px] text-ink-3">
+          <p className="mt-1.5 font-mono text-[0.6875rem] text-ink-3">
             {company?.address_line}
           </p>
         </div>
@@ -126,7 +126,7 @@ function Masthead() {
               <button
                 key={c.id}
                 onClick={() => void setActiveCompany(c.id)}
-                className={`border px-3.5 py-2 font-mono text-[11px] uppercase tracking-[.13em]
+                className={`entity-switch border px-3.5 py-2 font-mono text-[0.6875rem] uppercase tracking-[.13em]
                   transition-colors first:rounded-l-[3px] last:rounded-r-[3px] -ml-px first:ml-0 ${
                     active
                       ? 'z-10 border-ink bg-ink text-paper-raised'
@@ -169,7 +169,7 @@ function SyncLamp() {
     return (
       <button
         onClick={() => void flushMarks()}
-        className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase
+        className="inline-flex items-center gap-1.5 font-mono text-[0.625rem] uppercase
                    tracking-[.13em] text-ochre transition-colors hover:text-ink"
         title={
           `${unsavedMarks} mark${unsavedMarks === 1 ? '' : 's'} not yet saved. ` +
@@ -191,7 +191,7 @@ function SyncLamp() {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase
+      className={`inline-flex items-center gap-1.5 font-mono text-[0.625rem] uppercase
                   tracking-[.13em] ${text}`}
       title={
         sync === 'live'
@@ -226,8 +226,8 @@ function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
             <button
               key={id}
               onClick={() => onTab(id)}
-              className={`group relative flex shrink-0 items-baseline gap-2 py-3 font-mono
-                text-[11px] uppercase tracking-[.13em] transition-colors ${
+              className={`tab-link group relative flex shrink-0 items-baseline gap-2 py-3 font-mono
+                text-[0.6875rem] uppercase tracking-[.13em] transition-colors ${
                   active ? 'text-ink' : 'text-ink-3 hover:text-ink-2'
                 }`}
             >
@@ -251,7 +251,7 @@ function ErrorRule() {
   if (!error) return null
   return (
     <div className="border-b border-vermillion/30 bg-vermillion-wash">
-      <div className="mx-auto max-w-[1440px] px-6 py-2 font-mono text-[11px] text-vermillion-deep">
+      <div className="mx-auto max-w-[1440px] px-6 py-2 font-mono text-[0.6875rem] text-vermillion-deep">
         {error}
       </div>
     </div>
@@ -261,7 +261,7 @@ function ErrorRule() {
 function Colophon() {
   return (
     <footer className="mx-auto max-w-[1440px] px-6 pb-10">
-      <div className="border-t border-rule pt-3 font-mono text-[10px] uppercase tracking-[.13em] text-ink-4">
+      <div className="border-t border-rule pt-3 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-4">
         Calcutta Traders · M.K. Cycles (P) Ltd — Kolkata
       </div>
     </footer>

@@ -279,19 +279,19 @@ export default function BonusPage() {
       <section className="rise leaf relative overflow-hidden p-6">
         {approved && (
           <div className="pointer-events-none absolute right-8 top-7 hidden sm:block">
-            <span className="stamp-approved !px-3 !py-1 !text-[13px]">Approved</span>
+            <span className="stamp-approved !px-3 !py-1 !text-[0.8125rem]">Approved</span>
           </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-stamp text-ink-3">
+            <div className="font-mono text-[0.625rem] uppercase tracking-stamp text-ink-3">
               Bonus payable to bank
             </div>
             <div className="tnum mt-1 text-[3.4rem] font-medium leading-[1] text-ink">
               ₹{inr(result.totals.neftTotal)}
             </div>
-            <div className="mt-2 font-mono text-[11px] text-ink-3">
+            <div className="mt-2 font-mono text-[0.6875rem] text-ink-3">
               {fyLabel(fyStartYear)} · {rate * 100}% rate · round {roundRule}
               {loadingWages && ' · loading saved months…'}
             </div>
@@ -361,25 +361,25 @@ export default function BonusPage() {
       </div>
 
       <section className="rise space-y-2" style={{ animationDelay: '85ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>How this is calculated</span>
-        </div>
-        <div className="leaf p-5 text-[13px] leading-relaxed text-ink-2">
+        </h2>
+        <div className="leaf p-5 text-[0.8125rem] leading-relaxed text-ink-2">
           <p>
             Same layout as <span className="font-medium text-ink">BONUS CALCULATION.xls</span>: one
             row per employee, one column per financial-year month (April → March), a{' '}
-            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">GROSS</span>{' '}
+            <span className="font-mono text-[0.6875rem] uppercase tracking-[.05em] text-ink">GROSS</span>{' '}
             column that sums the twelve, a{' '}
-            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">%</span> rate
+            <span className="font-mono text-[0.6875rem] uppercase tracking-[.05em] text-ink">%</span> rate
             column, and a{' '}
-            <span className="font-mono text-[11px] uppercase tracking-[.05em] text-ink">BONUS</span>{' '}
+            <span className="font-mono text-[0.6875rem] uppercase tracking-[.05em] text-ink">BONUS</span>{' '}
             column — this page just automates filling the twelve monthly cells instead of retyping
             them from the pay register every year.
           </p>
           <ol className="mt-3 list-decimal space-y-1.5 pl-5">
             <li>
               <span className="font-medium text-ink">Each month's figure</span> is{' '}
-              <span className="tnum font-mono text-[12px]">payable + P.Tax − tiffin</span> from that
+              <span className="tnum font-mono text-[0.75rem]">payable + P.Tax − tiffin</span> from that
               month's saved Month End run — the Payment of Bonus Act's definition of bonus-eligible
               wage (it adds back what P.Tax would otherwise have deducted, and strips the tiffin
               allowance, which the Act treats as a special allowance rather than wage).
@@ -392,7 +392,7 @@ export default function BonusPage() {
             </li>
             <li>
               <span className="font-medium text-ink">BONUS</span> is{' '}
-              <span className="tnum font-mono text-[12px]">GROSS × rate</span>, rounded per the rule
+              <span className="tnum font-mono text-[0.75rem]">GROSS × rate</span>, rounded per the rule
               set above. Every financial year in the workbook used a flat{' '}
               <span className="tnum">16.5%</span> and rounded to the{' '}
               <span className="font-medium text-ink">nearest</span> rupee — not the always-round-up
@@ -410,12 +410,12 @@ export default function BonusPage() {
       </section>
 
       <section className="rise space-y-2" style={{ animationDelay: '90ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Bonus computation</span>
           <span className="ml-auto normal-case tracking-normal text-ink-4">
             {monthsInFy} of 12 months found from saved runs
           </span>
-        </div>
+        </h2>
 
         <div className="leaf overflow-x-auto">
           <table className="w-full">
@@ -456,7 +456,7 @@ export default function BonusPage() {
                     <td className="td tnum text-right text-[15px] font-semibold">{inr(line.rounded)}</td>
                     <td className="td">
                       <span
-                        className="font-mono text-[10px] uppercase tracking-[.1em] text-ink-3"
+                        className="font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3"
                         title="Change an employee's default pay mode under Employees"
                       >
                         {line.payMode}
@@ -468,7 +468,7 @@ export default function BonusPage() {
             </tbody>
             <tfoot>
               <tr className="rule-total">
-                <td className="td border-b-0 font-mono text-[10px] uppercase tracking-[.13em] text-ink-3" colSpan={4}>
+                <td className="td border-b-0 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3" colSpan={4}>
                   Total
                 </td>
                 <td className="td tnum border-b-0 text-right">{inr(result.totals.annualWage, { paise: true })}</td>
@@ -483,7 +483,7 @@ export default function BonusPage() {
       </section>
 
       <section className="rise space-y-2" style={{ animationDelay: '150ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Bank file</span>
           <span
             className={`tag ${
@@ -494,13 +494,13 @@ export default function BonusPage() {
           >
             {neft.rows.length} / {company.min_neft_rows} rows
           </span>
-        </div>
+        </h2>
 
         <div className="leaf p-4">
           <ol className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
             {neft.rows.map((row, i) => (
               <li key={i} className="flex items-baseline gap-3 border-b border-rule py-1.5 last:border-b-0">
-                <span className="tnum w-5 text-right font-mono text-[10px] text-ink-4">{i + 1}</span>
+                <span className="tnum w-5 text-right font-mono text-[0.625rem] text-ink-4">{i + 1}</span>
                 <span className="truncate text-sm">{row.beneficiaryName}</span>
                 <span className="tnum ml-auto text-sm">{inr(row.amount)}</span>
               </li>
@@ -510,10 +510,10 @@ export default function BonusPage() {
       </section>
 
       <section className="rise space-y-2" style={{ animationDelay: '200ms' }}>
-        <div className="rubric">
+        <h2 className="rubric">
           <span>Issue</span>
           {savedAt && <span className="ml-auto normal-case tracking-normal text-verdigris">Saved {savedAt}</span>}
-        </div>
+        </h2>
 
         <div className="leaf flex flex-wrap items-center gap-2 p-4">
           <Field label="Cheque no.">
@@ -626,7 +626,7 @@ function Note({ tone, children }: { tone: 'vermillion' | 'ochre' | 'quiet'; chil
     quiet: 'border-l-rule-strong bg-paper-raised text-ink-2',
   }[tone]
   return (
-    <p className={`border border-paper-edge border-l-[3px] px-4 py-2.5 text-[13px] ${styles}`}>
+    <p className={`border border-paper-edge border-l-[3px] px-4 py-2.5 text-[0.8125rem] ${styles}`}>
       {children}
     </p>
   )
