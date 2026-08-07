@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5183,
       "autoPort": true
+    },
+    {
+      "name": "salary-tracker-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "preview", "--port", "5184", "--strictPort"],
+      "port": 5184
     }
   ]
 }

@@ -104,6 +104,9 @@ interface StoreState {
 
 const key = (employeeId: string, iso: string) => `${employeeId}|${iso}`
 
+/** Short month names, for naming a date back to the person in a toast. */
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 /* ---------------------------------------------------------------- outbox --
  *
  * Attendance is marked every day, often on a phone, often on a bad connection.
@@ -597,7 +600,22 @@ export const useStore = create<StoreState>((set, get) => ({
       false,
       false,
     )
-    toast.ok(`Undid ${move.cells.length} mark${move.cells.length === 1 ? '' : 's'}`)
+    /*
+     * Name what went back, and say so when it came from an earlier sitting.
+     *
+     * History outlives the tab by design, so Ctrl+Z on a freshly opened app can
+     * reach a move made yesterday. "Undid 1 mark" gives no way to tell that
+     * from undoing the click just made — the date is what makes it checkable.
+     */
+    const dates = [...new Set(move.cells.map((c) => c.marked_on))].sort()
+    const day = (iso: string) => {
+      const [, m, d] = iso.split('-')
+      return `${Number(d)} ${MONTH_ABBR[Number(m) - 1]}`
+    }
+    const span = dates.length === 1 ? day(dates[0]) : `${day(dates[0])}–${day(dates[dates.length - 1])}`
+    const n = move.cells.length
+    const earlier = move.at < sessionStartedAt ? ', from an earlier session' : ''
+    toast.ok(`Undid ${n} mark${n === 1 ? '' : 's'} on ${span}${earlier}`)
   },
 
   async flushMarks() {

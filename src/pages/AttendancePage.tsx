@@ -29,20 +29,6 @@ export default function AttendancePage() {
   const [{ year, month }, setPeriod] = useState(currentMonth)
   const [confirmingClear, setConfirmingClear] = useState(false)
 
-  // Ctrl+Z / Cmd+Z, the reflex anyone reaches for after a mis-click.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.key === 'z' || e.key === 'Z') || !(e.ctrlKey || e.metaKey) || e.shiftKey) return
-      const el = e.target as HTMLElement | null
-      // Leave the browser's own undo alone while typing.
-      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
-      e.preventDefault()
-      void undo()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [undo])
-
   /**
    * Drag-to-paint: mousedown on a cell decides the status (by the same
    * cycle-to-next rule as a single click), then dragging over further cells —

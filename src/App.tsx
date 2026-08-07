@@ -21,12 +21,34 @@ const TABS: { id: Tab; label: string; folio: string }[] = [
 ]
 
 export default function App() {
-  const { ready, init } = useStore()
+  const { ready, init, undo } = useStore()
   const [tab, setTab] = useState<Tab>('attendance')
 
   useEffect(() => {
     void init()
   }, [init])
+
+  /*
+   * Undo is bound at the app, not on the register.
+   *
+   * It lived on the Attendance page, which meant the shortcut existed only
+   * while that page was mounted: mark a few cells, glance at Month End, come
+   * back, and Ctrl+Z did nothing until the page had re-rendered. The history
+   * itself is global, so the key that reaches it should be too.
+   */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const z = e.key === 'z' || e.key === 'Z'
+      if (!z || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return
+      // Leave the browser's own undo alone while text is being edited.
+      const el = e.target as HTMLElement | null
+      if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return
+      e.preventDefault()
+      void undo()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo])
 
   if (!ready) return <Opening />
 
