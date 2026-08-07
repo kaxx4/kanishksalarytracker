@@ -9,6 +9,9 @@ export interface Company {
   address_line: string | null
   gst_no: string | null
   cin_no: string | null
+  /** Printed on the Form M pay register; editable under Settings. */
+  employer_name: string | null
+  registration_no: string | null
   remitter_name: string
   account_no: string
   branch_code: string

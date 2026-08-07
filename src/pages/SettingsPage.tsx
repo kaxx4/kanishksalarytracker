@@ -53,6 +53,44 @@ export default function SettingsPage() {
             {company.cin_no && <Row label="CIN" value={company.cin_no} num />}
             <Row label="Bank" value={`${company.bank_name}, ${company.bank_branch}`} />
           </dl>
+
+          {/*
+            These two appear nowhere else in the app — they exist because the
+            Form M pay register prints them. Editable here so a change never
+            needs a code edit.
+          */}
+          <div className="mt-5 grid gap-4 border-t border-rule pt-5 sm:grid-cols-2">
+            <div>
+              <label className="label">Employer / shop-keeper name</label>
+              <input
+                className="input"
+                defaultValue={company.employer_name ?? ''}
+                key={`emp-${company.id}`}
+                placeholder="MR. V.N. AGARWAL"
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v !== (company.employer_name ?? '')) void save({ employer_name: v || null })
+                }}
+              />
+            </div>
+            <div>
+              <label className="label">Registration no.</label>
+              <input
+                className="input tnum"
+                defaultValue={company.registration_no ?? ''}
+                key={`reg-${company.id}`}
+                placeholder="leave blank if none"
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v !== (company.registration_no ?? '')) void save({ registration_no: v || null })
+                }}
+              />
+            </div>
+          </div>
+          <p className="mt-3 text-[13px] text-ink-2">
+            Both are printed on the Form M pay register. A blank one prints the empty ruled line,
+            as on the original register.
+          </p>
         </div>
       </section>
 

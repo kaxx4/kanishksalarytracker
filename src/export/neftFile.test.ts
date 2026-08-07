@@ -15,6 +15,7 @@ const CT: Company = {
   id: 'ct', code: 'CT', name: 'CALCUTTA TRADERS',
   address_line: '4 BENTINCK STREET, KOLKATA : 700001',
   gst_no: '19AACFC1126H1ZU', cin_no: null,
+  employer_name: 'MR. V.N. AGARWAL', registration_no: null,
   remitter_name: 'CALCUTTA TRADERS',
   account_no: '12428020000010',
   branch_code: '1242',

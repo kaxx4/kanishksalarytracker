@@ -51,15 +51,40 @@ const PRINT_CSS = `
   .net { border-top: 1.5px solid #000; margin-top: 10px; padding-top: 8px;
          display: flex; justify-content: space-between; font-size: 12pt; font-weight: bold; }
   .bn { font-family: "Noto Sans Bengali", "Nirmala UI", "Vrinda", sans-serif; }
-  .formm-title { text-align: center; margin-bottom: 10px; }
+  /* Form M (left) sits beside the centred PAY REGISTER title, as on the book. */
+  .formm-head { position: relative; margin-bottom: 10px; min-height: 46px; }
+  .formm-rule { position: absolute; left: 0; top: 0; font-size: 10.5pt; line-height: 1.35; }
+  .formm-title { text-align: center; }
   .formm-title .en { font-size: 18pt; font-weight: bold; letter-spacing: .5px; }
   .formm-title .bn { font-size: 15pt; font-weight: bold; }
-  .formm-title .rule { font-size: 10pt; font-weight: normal; margin-top: 1px; }
+  /* The register writes absence over paid leave with a rule and a net beneath. */
+  .formm .adj { display: inline-block; text-align: right; line-height: 1.25; }
+  .formm .adj-line { display: block; white-space: nowrap; }
+  .formm .adj-rule { border-bottom: 1px solid #000; padding-bottom: 1px; }
+  .formm tfoot td { font-weight: bold; background: #f4f4f4; }
+  .formm thead th .bn { display: block; font-weight: normal; font-size: 7.5pt; }
   .formm-fields { margin-bottom: 12px; font-size: 10.5pt; }
-  .formm-fields .field { display: flex; gap: 6px; margin: 3px 0; align-items: baseline; }
-  .formm-fields .label { flex: 0 0 auto; white-space: nowrap; }
-  .formm-fields .label .bn { font-size: 9pt; display: block; color: #333; }
-  .formm-fields .value { flex: 1; border-bottom: 1px solid #000; min-height: 14px; padding: 0 4px; }
+  .formm-fields .field { display: flex; gap: 6px; margin: 5px 0; align-items: flex-end; }
+  .formm-fields .label { flex: 0 0 auto; white-space: nowrap; line-height: 1.25; }
+  .formm-fields .label .bn { font-size: 9pt; display: block; color: #000; }
+  .formm-fields .brace { flex: 0 0 auto; font-size: 15pt; line-height: 1; }
+  .formm-fields .value {
+    flex: 1; border-bottom: 1px solid #000; min-height: 15px; padding: 0 6px;
+    font-weight: 600; letter-spacing: .3px;
+  }
+  /* Witness left, the money in the middle, the employer's signature right. */
+  .formm-cert .cert-foot {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 20px; margin-top: 30px;
+  }
+  .formm-cert .witness { flex: 0 0 auto; line-height: 1.9; }
+  .formm-cert .totals { flex: 0 0 auto; text-align: right; line-height: 1.6; }
+  .formm-cert .totals .grand { border-top: 1px solid #000; padding-top: 2px; }
+  .formm-cert .employer-sign { flex: 0 0 auto; text-align: center; }
+  /* Left deliberately empty — signed by hand after printing. */
+  .formm-cert .sign-space {
+    display: block; width: 190px; height: 44px; border-bottom: 1px solid #000; margin-bottom: 3px;
+  }
   .formm table td, .formm table th { border: 1px solid #000; padding: 4px 5px; font-size: 8.5pt; }
   .formm .serial { font-weight: bold; margin-right: 3px; }
   .formm-cert { margin-top: 14px; font-size: 10pt; }
@@ -320,10 +345,24 @@ export function renderFormM({ company, year, month, lines }: FormMData): string 
   const salaryTotal = sum(paid.map((l) => l.rounded))
   const ptaxTotal = sum(paid.map((l) => l.ptax))
 
-  const additionalWages = (l: RunLine): string => {
-    const parts = [`AS-${l.absence || 'NIL'}`]
-    if (l.advance) parts.push(`AD-${inr(l.advance)}`)
-    return parts.join('<br/>')
+  /*
+   * The register writes this column as a worked subtraction, not a sentence:
+   *
+   *     AS - 27      absence days
+   *     Ad -  2      paid leave credited back
+   *     ------
+   *        = 25      days actually docked
+   *
+   * "NIL" is the register's own word for a zero, so it is used rather than 0.
+   */
+  const daysWorking = (l: RunLine): string => {
+    const net = l.absence - l.leave_pay
+    return `
+      <span class="adj">
+        <span class="adj-line">AS &ndash; ${l.absence || 'NIL'}</span>
+        <span class="adj-line adj-rule">Ad &ndash; ${l.leave_pay || 'NIL'}</span>
+        <span class="adj-line">= ${net > 0 ? net : 'NIL'}</span>
+      </span>`
   }
 
   const body = paid
@@ -332,36 +371,51 @@ export function renderFormM({ company, year, month, lines }: FormMData): string 
       <tr>
         <td><span class="serial">${i + 1})</span>${esc(l.employee_name)}</td>
         <td class="num">${inr(l.monthly_pay)}</td>
-        <td class="num">${additionalWages(l)}</td>
-        <td>${l.tds ? esc(deductionNote(l)) : '—'}</td>
+        <td class="num">${daysWorking(l)}</td>
+        <td class="num">${l.tiffin ? inr(l.tiffin) : '&mdash;'}</td>
         <td class="num"><strong>${inr(l.rounded)}</strong></td>
         <td></td>
-        <td class="num">${inr(l.ptax)}</td>
+        <td class="num">${l.ptax ? inr(l.ptax) : '&mdash;'}</td>
       </tr>`,
     )
     .join('')
 
+  /*
+   * Each field on the register is a two-line label (English over Bengali), a
+   * brace, then a ruled line carrying the value. A blank value still prints
+   * the rule, exactly as the printed book does.
+   */
   const field = (en: string, bn: string, value: string) => `
     <div class="field">
       <span class="label">${esc(en)}<span class="bn">${bn}</span></span>
+      <span class="brace">}</span>
       <span class="value">${esc(value)}</span>
     </div>`
 
   return `
   <div class="sheet formm">
-    <div class="formm-title">
-      <div class="en">PAY REGISTER</div>
-      <div class="bn">বেতনের হিসাব বহি</div>
-      <div class="rule">Form M (ফরম এম) &nbsp;[See Rule 30 / ৩০ বিধি দ্রষ্টব্য]</div>
+    <div class="formm-head">
+      <div class="formm-rule">
+        Form M (<span class="bn">ফরম এম</span>)<br/>
+        [See rule 30 (<span class="bn"> ৩০ নিয়ম দ্রষ্টব্য</span>)]
+      </div>
+      <div class="formm-title">
+        <div class="en">PAY REGISTER</div>
+        <div class="bn">বেতনের হিসাব বহি</div>
+      </div>
     </div>
 
     <div class="formm-fields">
       ${field('Name of Shop/Establishment', 'দোকানের / সংস্থার নাম', company.name)}
-      ${field('Name of Employer/Shop-keeper', 'দোকানের / মালিক / নিয়োগকর্তার নাম', '')}
-      ${field('Address in Full', 'পূর্ণ ঠিকানা', company.address_line ?? '')}
-      ${field('Registration No.', 'রেজিস্ট্রেশন নং', '')}
       ${field(
-        'Day/week/month (in accordance with mode of payment) and year',
+        'Name of Employer/Shop-keeper',
+        'দোকানের / মালিক / নিয়োগকর্তার নাম',
+        company.employer_name ?? '',
+      )}
+      ${field('Address in Full', 'পূর্ণ ঠিকানা', company.address_line ?? '')}
+      ${field('Registration No.', 'রেজিস্ট্রেশন নং', company.registration_no ?? '')}
+      ${field(
+        'Day/week/month (in accordance with mode of payment) and year.',
         'দিন / সপ্তাহ / মাস (মাহিনা দেওয়ার নিয়মানুযায়ী) এবং সন',
         `Month of ${MONTH_NAMES[month - 1]}, ${year}.`,
       )}
@@ -370,41 +424,51 @@ export function renderFormM({ company, year, month, lines }: FormMData): string 
     <table>
       <thead>
         <tr>
-          <th>Name of Persons<br/>employed<span class="bn" style="display:block">কর্মচারীগণের নাম</span></th>
-          <th class="num">Rate of wages<br/>(per month/<br/>week or day)<span class="bn" style="display:block">বেতনের হার</span></th>
-          <th class="num">Additional wages<br/>for overtime<span class="bn" style="display:block">অতিরিক্ত বেতন</span></th>
-          <th>Deductions if any<br/>and reasons therefor<span class="bn" style="display:block">বেতন কাটা হইলে কারণ</span></th>
-          <th class="num">Total amount<br/>paid as wages<span class="bn" style="display:block">মোট প্রদত্ত টাকা</span></th>
-          <th>Signature of the<br/>persons employee<span class="bn" style="display:block">কর্মচারীর সহি</span></th>
-          <th class="num">Remarks<br/>(P.Tax)<span class="bn" style="display:block">মন্তব্য</span></th>
+          <th>Name of Persons<br/>employed<span class="bn">কর্মচারীগণের নাম</span></th>
+          <th class="num">Rate of wages<br/>(per month/<br/>week or day)<span class="bn">বেতনের হার<br/>মাসিক, সাপ্তাহিক<br/>বা দৈনিক</span></th>
+          <th class="num">Additional<br/>wages for<br/>overtime<span class="bn">অতিরিক্ত<br/>খাটুনির বাড়তি</span></th>
+          <th class="num">Deductions, if<br/>any and reasons<br/>therefor<span class="bn">বেতন কাটা<br/>হইলে তাহার</span></th>
+          <th class="num">Total amount<br/>paid as wages<span class="bn">বেতন বাবদ মোট<br/>প্রদত্ত টাকার<br/>পরিমাণ</span></th>
+          <th>Signature of the<br/>persons employee<span class="bn">কর্মচারীগণের সহি</span></th>
+          <th class="num">Remarks<span class="bn">মন্তব্য</span></th>
         </tr>
       </thead>
       <tbody>${body}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4"></td>
+          <td class="num">${inr(salaryTotal)}</td>
+          <td></td>
+          <td class="num">${inr(ptaxTotal)}</td>
+        </tr>
+      </tfoot>
     </table>
 
     <div class="formm-cert">
-      <div class="totals">
-        <div>Salary — <strong>${inr(salaryTotal)}</strong></div>
-        <div>P.Tax — <strong>${inr(ptaxTotal)}</strong></div>
-        <div>Grand Total — <strong>${inr(salaryTotal + ptaxTotal)}</strong></div>
-      </div>
-
       <p>This is to certify that I have to pay in the presence of witness testifying herewith
-      paid the amount of Rs. <strong>${inr(salaryTotal)}</strong> in wages to the persons employed
-      by me and that each employee has been received from the amount due as specified against his
-      name above.</p>
+      paid the amount of Rs. <strong>${inr(salaryTotal + ptaxTotal)}</strong> in wages to the
+      persons employed by me and that each employee has been received from the amount due as
+      specified against his name above.</p>
 
-      <div class="row" style="margin-top:36px">
-        <div>
-          Witness — সাক্ষীগণ —<br/>
-          1. ______________________<br/>
-          2. ______________________<br/>
-          Date (তাং) ______________________
+      <div class="cert-foot">
+        <div class="witness">
+          Witness &ndash; <span class="bn">সাক্ষীগণ</span> &ndash;<br/>
+          1. <span class="bn">১</span> ____________________<br/>
+          2. <span class="bn">২</span> ____________________<br/>
+          Date (<span class="bn">তাং</span>) ____________________
         </div>
-        <div style="text-align:right">
-          ______________________<br/>
+
+        <div class="totals">
+          <div>Salary &ndash; <strong>${inr(salaryTotal)}</strong> &ndash;</div>
+          <div>P.Tax &ndash; <strong>${inr(ptaxTotal)}</strong> &ndash;</div>
+          <div class="grand">
+            <span class="bn">যাহা</span> &ndash; <strong>${inr(salaryTotal + ptaxTotal)}</strong> &ndash;
+          </div>
+        </div>
+        <div class="employer-sign">
+          <span class="sign-space"></span>
           Signature of shop-keeper/employer<br/>
-          <span class="bn">দোকানের মালিকের নিয়োগকর্তার সহি</span>
+          <span class="bn">দোকানের মালিকের নিয়োগ কর্তার সহি</span>
         </div>
       </div>
     </div>
@@ -444,9 +508,3 @@ function sum(values: number[]): number {
   return values.reduce((a, b) => a + b, 0)
 }
 
-function deductionNote(line: RunLine): string {
-  const parts: string[] = []
-  if (line.advance) parts.push(`Advance ${rupees(line.advance)}`)
-  if (line.tds) parts.push(`TDS ${rupees(line.tds)}`)
-  return parts.join(', ')
-}
