@@ -335,8 +335,14 @@ needed and did not get.
 |---|---|---|---|---|
 | 34 | MKCP Apr 2025 | 9 | 6 of 9 | Satinder's 14 equals his net docked days |
 | 35 | MKCP May 2025 | 8 | 6 of 8 | Ranjit 14 vs 19, Ramnaresh 15 vs 18 |
+| 36 | MKCP Jun 2025 | 8 | 5 of 8 | Shambhu 7v8, Upender 20v24, Ramnaresh 19v23 |
 
-Remaining: photos 36-50, fifteen months, MKCP June 2025 through August 2026.
+650 marks written so far. Remaining: photos 37-50, fourteen months, MKCP July
+2025 through August 2026.
+
+`FAB` in the Remarks column means absent the whole month, and it reconciles
+exactly — both FAB men in June show 25 absences against 25 working days, and
+neither has a pay line that month.
 
 ### Reading photo 35 by eye beat the classifier
 
