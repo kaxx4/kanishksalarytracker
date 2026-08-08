@@ -64,15 +64,17 @@ Arun Kr Sah, Ankit Kumar.
 Say "continue the register import" — the rules above and the per-batch notes in
 migrations 0009-0016 carry everything needed.
 
-## Open discrepancy — CT July 2026, Surajit Pal
+## Open discrepancy — July 2026, both companies
 
-The one real conflict the import has found. Not overwritten, per the rule.
+The only real conflict the import has found — and it appears **twice**, in the
+same month, in both companies. Not overwritten, per the rule.
 
-| | Register | Stored |
-|---|---|---|
-| Surajit Pal, paid | **35,620** | **30,620** |
+| Month | Person | Register | Stored | Difference |
+|---|---|---|---|---|
+| CT July 2026 | Surajit Pal | **35,620** | **30,620** | -5,000 |
+| MKCP July 2026 | Sunil Kr Tiwari | **18,000** | **13,000** | -5,000 |
 
-The other eight lines of that month match the photograph exactly.
+Every other line in both months matches the photographs exactly.
 
 The stored row does not agree with itself: it holds a rate of 35,500 and tiffin
 of 270, and 35,500 + 270 - 150 = 35,620, not 30,620. The register is
@@ -84,13 +86,19 @@ subtotal is 1,15,785 — exactly 5,000 more.
 
 So one of these is true and I cannot tell which from the paper alone:
 
-1. Surajit was paid 30,620 by bank and 5,000 some other way, and the register
-   records his full entitlement while the letter records only the transfer.
-2. The stored 30,620 is a transcription error from the original seeding, and
-   both the bank letter and the test have been pinned to a wrong figure since.
+1. Each man was paid 5,000 some way other than the bank transfer, so the
+   register records entitlement while the letter records only what moved
+   through the bank.
+2. The stored figures are transcription errors from the original seeding, and
+   the bank letters and `payroll.test.ts` have been pinned to them since.
 
-Reading (1) is more likely — the letter, the NEFT file and the test all agree
-on 1,10,785, and three independent artefacts are unlikely to share one typo.
-But it needs the operator, not a guess: if (2) is right, the fix is a data
-correction plus a test change, and Surajit's FY2026-27 bonus is 5,000 of wage
-short.
+Reading (1) is now much the more likely. It is not one anomaly but two: two
+separate registers, two different companies, two different people, the same
+month, and the same 5,000 to the rupee. A transcription error does not
+reproduce itself that precisely across two books, whereas a standing practice
+of paying part of one person's July pay outside the bank transfer does.
+
+Still the operator's call, because it decides two things: whether the bonus
+base for those two men is 5,000 short for FY2026-27, and whether the missing
+5,000 each was cash, an advance recovery, or something else that ought to be
+recorded rather than inferred.
