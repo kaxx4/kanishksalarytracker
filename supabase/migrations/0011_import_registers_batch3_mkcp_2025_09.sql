@@ -1,0 +1,18 @@
+-- Paper-register import, batch 3: MKCP September 2025.
+-- Rules and method as recorded in 0009's header.
+--
+--   September 2025  112,630 + 900 = 113,530   (8 lines)
+--
+-- Photographed twice from different angles; both reads agree line for line.
+-- Upender Kumar's row is whited out on the page and gets no line.
+--
+-- October 2025 is transcribed and reconciles (143,085 + 1,020) but is NOT
+-- imported yet. From October the "Deductions" column stops holding tiffin and
+-- starts holding a large addition — 3,675, 4,662, 4,826, 5,100, 2,550 — that
+-- each line confirms arithmetically (14,750 + 3,675 - 130 = 18,295). Monthly
+-- rates also step from 13,900 to 14,750 that month. Storing those amounts as
+-- tiffin would be wrong twice over: it is not tiffin, and the bonus engine
+-- subtracts tiffin from the bonus-eligible wage, so it would quietly shrink
+-- every bonus for the year. Held pending the operator naming what it is.
+--
+-- Applied SQL is in the Supabase migration history as import_mkcp_2025_09.
