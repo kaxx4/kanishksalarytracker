@@ -4,3 +4,7 @@ dist
 .env.local
 *.local
 .DS_Store
+
+# Source photographs of the paper registers — 159MB of scans, kept locally.
+# The data they carry belongs in the database, not in git history.
+Photos-*/
