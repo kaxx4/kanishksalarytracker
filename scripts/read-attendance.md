@@ -347,7 +347,39 @@ needed and did not get.
 | 44 | MKCP Feb 2026 | 8 | 7 of 8 | Mahesh 8 v 9 |
 | 45 | MKCP Mar 2026 | 8 | 4 of 8 | four short in the usual direction |
 
-Remaining: photos 46-50, five months, MKCP April through August 2026.
+| 46 | MKCP Apr 2026 | 8 | 6 of 8 exact + 2 in known pattern | Ranjit 3v4, Mahesh 14v"16"; Upender FAB 25/25 exact; day 29 unlabelled firm closure (recorded present) |
+| 47 | MKCP May 2026 | 8 | 6 of 8 exact + 2 in known pattern | Ranjit 12v14, Mahesh 14v16; Upender FAB 27/27 exact; May 31 (a calendar Sunday) is worked, not struck, in this register |
+| 48 | MKCP Jun 2026 | 8 | 7 of 8 exact + 1 in known pattern | Ramnaresh 13v16; Sunil Kr Tiwari joins, Abs-4 exact; Upender no longer on the roster |
+| 49 | MKCP Jul 2026 | 8 | 7 of 8 exact + 1 in known pattern | Shambhu 5v5 exact (absent the last 5 days), Ramnaresh 8v9. **Table already held conflicting data for ~10 scattered dates across 4 employees, dated Aug 3-4, predating this import — see below** |
+| 50 | MKCP Aug 2026 | 8 | n/a, month in progress | Only days 1-8 transcribed (paper stops there); table already held a full month for every employee dated Aug 4, matching paper exactly for days 1-8, so this migration inserted zero rows |
+
+All five remaining months (photos 46-50) are now imported. Twelve months were already done; these five complete MKCP April through August 2026.
+
+### July 2026 already had partial data before this session — and it disagrees with paper
+
+Verifying the July migration turned up something the task brief didn't mention:
+`salary_attendance` already held rows for July 2026 timestamped 2026-08-03/04,
+well before this session ran. `on conflict do nothing` did exactly its job —
+those rows were left alone and only the genuinely empty dates got my
+paper-transcribed values — but the result is that July's attendance in the app
+is now a **hybrid**, and the pre-existing half does not match the paper
+register:
+
+- Sunil Kumar Tiwari: pre-existing rows mark him absent on Jul 1, 3, 9, 13,
+  16, 17, 27, 28 — paper shows him present every one of those days.
+- Shatrudahan: pre-existing rows mark him absent on Jul 3, 13, 14 — paper
+  shows him present all month (matching his NIL remark).
+- Ramnaresh Bhagat and Shambhu Prasad Singh: pre-existing rows use a
+  `paid_leave` status on 4-5 scattered dates each, a status this paper
+  register has no way to distinguish from a plain P.
+
+This pre-existing data was not touched — overwriting it wasn't part of this
+task and it may or may not be intentional. It is flagged here and in the
+handoff message so the operator can decide whether to correct it. Nothing
+above August 2026 is affected; June and every earlier month verified as a
+clean single-batch write with no pre-existing rows.
+
+Remaining: none. Photos 46-50 were the last five.
 
 ### The shortfall is systematic, not random
 
