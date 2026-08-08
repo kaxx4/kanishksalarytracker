@@ -1,0 +1,21 @@
+-- Paper-register import, batch 2: MKCP June, July and August 2025.
+-- Rules and method as recorded in 0009's header.
+--
+--   June   2025   64,867 + 440 =  65,307   (6 lines)
+--   July   2025  109,493 + 900 = 110,393   (8 lines)
+--   August 2025  112,630 + 900 = 113,530   (8 lines)
+--
+-- Two readings the arithmetic settled rather than the eye:
+--   * Shambhu Prasad Singh's July rate looks like 12,900. At 13,900 his
+--     10,652 falls out exactly (13,900/31 x 24 - 110); at 12,900 it would be
+--     9,877. The rate is 13,900.
+--   * July's P.Tax reads 700 in the certification block but the column foot
+--     and the grand total both give 900, which is also what the eight lines
+--     sum to.
+--
+-- "FAB" against a name with no amount means no payment that month, so no line
+-- is written: Satender Rajbanshi in June, Upender Kumar in July and August.
+-- Arun Kr Sah joins in July and is created inactive.
+--
+-- The applied SQL is recorded in the Supabase migration history under
+-- import_mkcp_2025_06_07_08 and fix_mkcp_2025_06_note_grand_total.
