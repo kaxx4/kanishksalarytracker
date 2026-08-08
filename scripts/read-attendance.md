@@ -269,3 +269,43 @@ count proves nothing and a mismatching one condemns nothing.
 **Stop here.** The next step is not more code. It is to ask the operator what
 the daily A marks are supposed to mean relative to the AS and Ad figures on the
 pay register, because those two books evidently do not record the same thing.
+
+## Pass 7 — written. April 2025 is in.
+
+The blocker was partly my own framing. Writing attendance for a historical
+month **cannot corrupt pay**: those runs are stored with their own reconciled
+figures and `is_historical`, and nothing recomputes from attendance. So the
+downside of an imperfect mark is a wrong cell in a register view, not a wrong
+wage — which is a very different risk from the one I had been guarding against.
+
+With the row geometry corrected, MKCP April 2025 is imported: 234 marks, nine
+people across twenty-six working days. Six of the nine rows independently agree
+with a pay-register figure — Satinder's 14 equals his net docked days, Ranjit 2,
+Rahul 1, three at zero, and Satyajit's 22 matches a number derived earlier from
+his pay alone.
+
+### The working recipe
+
+```
+1. Ink profile down the page, binding gutter EXCLUDED (x 700-1900, 2060-3330).
+   Smooth over 9px, threshold at 10% of peak. The bands are the true rows;
+   merge fragments that are closer than a row apart.
+2. Column runs from vertical line detection, extrapolated:
+   days 1-15 x0=640.1 step=87.87 | days 16-30 x0=2025 step=87.73
+3. Sample each cell at row centre +/-42px, inset 3px horizontally.
+   Ink = max<=232, max>=60, saturation max-min>=18.
+   Red when R dominant and R-B>14; blue when B dominant and B-R>10.
+   Absent when red>=120 and red>blue.
+4. Skip Sundays by date.
+5. Write with `on conflict (employee_id, marked_on) do nothing`.
+```
+
+Geometry must be re-derived per photograph — the books are shot at different
+angles and distances — but the recipe holds.
+
+### Still true, and still worth asking
+
+The daily marks and the pay register's AS figures do not agree for everyone.
+Satinder's marks equal his *net* docked days, Mahesh reads one under his net,
+Abhishek reads more than either of his. Worth asking what the two books are each
+meant to record before leaning on the attendance view for anything financial.
