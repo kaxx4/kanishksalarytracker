@@ -343,7 +343,11 @@ needed and did not get.
 | 41 | MKCP Nov 2025 | 7 | 3 of 7 | four short; Guru Nanak Jayanti on the 5th |
 | 42 | MKCP Dec 2025 | 8 | 7 of 8 | Shambhu 9 v 10; Upender rejoins on the 27th |
 
-Remaining: photos 43-50, eight months, MKCP January through August 2026.
+| 43 | MKCP Jan 2026 | 8 | **8 of 8** | Shambhu 3, Upender 11, both exact |
+| 44 | MKCP Feb 2026 | 8 | 7 of 8 | Mahesh 8 v 9 |
+| 45 | MKCP Mar 2026 | 8 | 4 of 8 | four short in the usual direction |
+
+Remaining: photos 46-50, five months, MKCP April through August 2026.
 
 ### The shortfall is systematic, not random
 
