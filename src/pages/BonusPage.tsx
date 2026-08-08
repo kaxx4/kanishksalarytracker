@@ -19,6 +19,7 @@ import { replaceRunLines } from '../lib/replaceLines.ts'
 import { supabase } from '../lib/supabase.ts'
 import { useStore } from '../store/useStore.ts'
 import { toast } from '../store/useToast.ts'
+import { MONTH_NAMES } from '../types.ts'
 import type { BonusRunLine } from '../types.ts'
 
 /** The financial year a bonus run is normally prepared for: the one just closed. */
@@ -39,7 +40,8 @@ export default function BonusPage() {
   const [rate, setRate] = useState(DEFAULT_BONUS_RATE)
   const [roundRule, setRoundRule] = useState<RoundRule>(DEFAULT_BONUS_ROUND_RULE)
   const [manualAddOn, setManualAddOn] = useState<Record<string, number>>({})
-  const [wageByEmployee, setWageByEmployee] = useState<Record<string, { total: number; months: number }>>({})
+  /** employeeId -> "year-month" -> bonus-eligible wage for that month. */
+  const [wageByMonth, setWageByMonth] = useState<Record<string, Record<string, number>>>({})
   const [loadingWages, setLoadingWages] = useState(false)
   const [chequeNo, setChequeNo] = useState('')
   const [letterDateIso, setLetterDateIso] = useState(todayIso)
@@ -87,42 +89,57 @@ export default function BonusPage() {
       const orClause = months.map((m) => `and(year.eq.${m.year},month.eq.${m.month})`).join(',')
       const runsRes = await supabase
         .from('salary_runs')
-        .select('id')
+        .select('id, year, month')
         .eq('company_id', company!.id)
         .or(orClause)
       if (runsRes.error || cancelled) {
         setLoadingWages(false)
         return
       }
-      const runIds = (runsRes.data ?? []).map((r) => r.id as string)
-      if (runIds.length === 0) {
+      const runs = (runsRes.data ?? []) as { id: string; year: number; month: number }[]
+      if (runs.length === 0) {
         if (!cancelled) {
-          setWageByEmployee({})
+          setWageByMonth({})
           setLoadingWages(false)
         }
         return
       }
       const linesRes = await supabase
         .from('salary_run_lines')
-        .select('employee_id, payable, ptax, tiffin')
-        .in('run_id', runIds)
+        .select('run_id, employee_id, payable, ptax, tiffin')
+        .in(
+          'run_id',
+          runs.map((r) => r.id),
+        )
       if (linesRes.error || cancelled) {
         setLoadingWages(false)
         return
       }
-      const agg: Record<string, { total: number; months: number }> = {}
+
+      /*
+       * Keep the wage per month rather than one annual figure per person.
+       *
+       * The bonus is a year's work summed, and a year is exactly where a gap
+       * hides: a month never run, or one imported without its P.Tax, lands as
+       * a slightly-too-small total that looks plausible. Held month by month,
+       * the hole is a blank cell you can point at.
+       */
+      const monthOf = new Map(runs.map((r) => [r.id, `${r.year}-${r.month}`]))
+      const agg: Record<string, Record<string, number>> = {}
       for (const line of linesRes.data ?? []) {
         if (!line.employee_id) continue
+        const mk = monthOf.get(line.run_id as string)
+        if (!mk) continue
         const wage = monthlyBonusWage({
           payable: Number(line.payable),
           ptax: Number(line.ptax),
           tiffin: Number(line.tiffin),
         })
-        const prev = agg[line.employee_id] ?? { total: 0, months: 0 }
-        agg[line.employee_id] = { total: prev.total + wage, months: prev.months + 1 }
+        agg[line.employee_id] ??= {}
+        agg[line.employee_id][mk] = (agg[line.employee_id][mk] ?? 0) + wage
       }
       if (!cancelled) {
-        setWageByEmployee(agg)
+        setWageByMonth(agg)
         setLoadingWages(false)
       }
     }
@@ -132,6 +149,16 @@ export default function BonusPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company?.id, fyStartYear])
+
+  /** The annual figure, rebuilt from the months so the two can never disagree. */
+  const wageByEmployee = useMemo(() => {
+    const out: Record<string, { total: number; months: number }> = {}
+    for (const [employeeId, byMonth] of Object.entries(wageByMonth)) {
+      const values = Object.values(byMonth)
+      out[employeeId] = { total: values.reduce((s, v) => s + v, 0), months: values.length }
+    }
+    return out
+  }, [wageByMonth])
 
   const lineInputs: BonusEmployeeInput[] = useMemo(
     () =>
@@ -421,23 +448,50 @@ export default function BonusPage() {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="th">Employee</th>
-                <th className="th text-right">Months found</th>
-                <th className="th text-right">Auto wage</th>
-                <th className="th text-right">Manual add-on</th>
-                <th className="th text-right">Annual wage</th>
-                <th className="th text-right">Bonus</th>
-                <th className="th">Mode</th>
+                <th scope="col" className="th sticky left-0 z-10 bg-paper-raised">Employee</th>
+                {months.map((m) => (
+                  <th
+                    key={`${m.year}-${m.month}`}
+                    scope="col"
+                    className="th text-right"
+                    title={`${MONTH_NAMES[m.month - 1]} ${m.year}`}
+                  >
+                    {MONTH_NAMES[m.month - 1].slice(0, 3)}
+                    <span className="block font-normal text-ink-4">{String(m.year).slice(2)}</span>
+                  </th>
+                ))}
+                <th scope="col" className="th text-right">Manual add-on</th>
+                <th scope="col" className="th text-right">Annual wage</th>
+                <th scope="col" className="th text-right">Bonus</th>
+                <th scope="col" className="th">Mode</th>
               </tr>
             </thead>
             <tbody>
               {result.lines.map((line) => {
-                const auto = wageByEmployee[line.employeeId]
+                const byMonth = wageByMonth[line.employeeId] ?? {}
                 return (
                   <tr key={line.employeeId} className="transition-colors hover:bg-paper-sunk/60">
-                    <td className="td font-medium">{line.name}</td>
-                    <td className="td tnum text-right text-ink-2">{auto?.months ?? 0} / 12</td>
-                    <td className="td tnum text-right text-ink-2">{inr(auto?.total ?? 0, { paise: true })}</td>
+                    <th scope="row" className="td sticky left-0 z-10 bg-paper-raised text-left font-medium">
+                      {line.name}
+                    </th>
+                    {months.map((m) => {
+                      const wage = byMonth[`${m.year}-${m.month}`]
+                      return (
+                        <td
+                          key={`${m.year}-${m.month}`}
+                          className={`td tnum text-right ${
+                            wage === undefined ? 'text-ink-4' : 'text-ink-2'
+                          }`}
+                          title={
+                            wage === undefined
+                              ? `No saved run for ${MONTH_NAMES[m.month - 1]} ${m.year}`
+                              : undefined
+                          }
+                        >
+                          {wage === undefined ? '—' : inr(wage)}
+                        </td>
+                      )
+                    })}
                     <td className="td text-right">
                       <input
                         className="tnum w-[6.5rem] rounded-[2px] border border-transparent bg-transparent
