@@ -198,7 +198,7 @@ export default function RunPage() {
         bank_ifsc: employee.bank_ifsc, bank_account_no: employee.bank_account_no,
         bank_account_type: employee.bank_account_type,
         monthly_pay: line.monthlyPay, absence: line.absence, leave_pay: line.leavePay,
-        days_present: line.daysPresent, tiffin: line.tiffin, gross: line.gross,
+        days_present: line.daysPresent, tiffin: line.tiffin, arrears: 0, gross: line.gross,
         ptax: line.ptax, tds: line.tds, advance: line.advance, net: line.net,
         payable: line.payable, rounded: line.rounded, pay_mode: line.payMode, sort_order: i + 1,
       }

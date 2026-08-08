@@ -365,6 +365,16 @@ export function renderFormM({ company, year, month, lines }: FormMData): string 
       </span>`
   }
 
+  /*
+   * The register's fourth column is written on by hand and does not always
+   * mean the same thing: tiffin in the ordinary months, arrears in a month
+   * when back-pay went out with the wages. Print whichever the line carries.
+   */
+  const extraColumn = (l: RunLine): string => {
+    if (l.arrears) return inr(l.arrears)
+    return l.tiffin ? inr(l.tiffin) : '&mdash;'
+  }
+
   const body = paid
     .map(
       (l, i) => `
@@ -372,7 +382,7 @@ export function renderFormM({ company, year, month, lines }: FormMData): string 
         <td><span class="serial">${i + 1})</span>${esc(l.employee_name)}</td>
         <td class="num">${inr(l.monthly_pay)}</td>
         <td class="num">${daysWorking(l)}</td>
-        <td class="num">${l.tiffin ? inr(l.tiffin) : '&mdash;'}</td>
+        <td class="num">${extraColumn(l)}</td>
         <td class="num"><strong>${inr(l.rounded)}</strong></td>
         <td></td>
         <td class="num">${l.ptax ? inr(l.ptax) : '&mdash;'}</td>

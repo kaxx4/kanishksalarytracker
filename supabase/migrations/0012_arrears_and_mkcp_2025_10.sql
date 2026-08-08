@@ -1,0 +1,18 @@
+-- Paper-register import, batch 3 continued: arrears, and MKCP October 2025.
+--
+--   October 2025  143,085 + 1,020 = 144,105   (8 lines, 25,475 arrears)
+--
+-- From October the register's fourth column stops being tiffin and carries
+-- arrears: back-pay from an ad-hoc increment, paid with the month's wages and
+-- counting toward the following year's bonus. Monthly rates also step from
+-- 13,900 to 14,750. Every line reconciles as rate + arrears - ptax = paid,
+-- e.g. Satender Rajbanshi 14,750 + 3,675 - 130 = 18,295.
+--
+-- Arrears cannot be filed as tiffin. The bonus engine takes the eligible wage
+-- as payable + ptax - tiffin, so tiffin would subtract exactly the amount that
+-- is supposed to count. Left inside `payable` with tiffin zero they are
+-- included automatically; the new column exists purely so Form M can print the
+-- figure the paper register shows in that cell.
+--
+-- Applied SQL is in the Supabase migration history as add_arrears_to_run_lines
+-- and import_mkcp_2025_10.

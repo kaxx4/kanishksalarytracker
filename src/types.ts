@@ -100,6 +100,8 @@ export interface RunLine {
   leave_pay: number
   days_present: number
   tiffin: number
+  /** Back-pay paid with the month's wages; already inside `payable`. */
+  arrears: number
   gross: number
   ptax: number
   tds: number
