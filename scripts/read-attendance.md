@@ -53,3 +53,44 @@ Re-photographing the attendance pages one page per shot, square to the page,
 makes the cells legible in the file itself and reduces all of the above to
 seventeen ordinary reads. Ten minutes with a phone against several sessions of
 calibration.
+
+## Current state of the classifier — run against April 2025
+
+Geometry is settled and correct:
+
+```
+rows y : 499 612 726 841 955 1070 1187 1302 1420 1530   (nine employees)
+days 1-15  : x0 = 640.1, step = 87.87
+days 16-30 : x0 = 2025,  step = 87.73
+Sundays    : 6, 13, 20, 27  (masked by date — the Sunday stroke is red too)
+```
+
+Classifier as it stands (sample cell interior, skip paper `>210` and printed
+rule `<75`, call red when `R-B>35 && R-G>22`, blue when `B-R>28`, absent when
+`red > blue*1.1`):
+
+| Row | Person | Detected A | Expected A | |
+|---|---|---|---|---|
+| 1 | Satinder Rajbanshi | 9 | 16 | ✗ |
+| 2 | Ranjit Rajbanshi | 1 | 2 | ✗ |
+| 3 | Shambhu Prasad Singh | 0 | 0 | ✓ |
+| 4 | Upender Kumar | 1 | 0 | ✗ |
+| 5 | Mahesh Ram | 15 | 18 | ✗ |
+| 6 | Shatrudahan | 0 | 0 | ✓ |
+| 7 | Rahul Sarkar | 1 | 1 | ✓ |
+| 8 | Satyajit Dey Adhicary | 18 | 22 (derived) | — |
+| 9 | Abhishek Kumar | 10 | 12 | ✗ |
+
+Three of nine reconcile. The failures all under-count, and the raw output is
+full of `.` where a mark plainly exists, so the classifier is **missing ink**
+rather than misreading colour. Two likely causes, in order:
+
+1. **Ink threshold too tight.** Ballpoint on aged paper is neither saturated
+   nor dark; `R-B>35` and `B-R>28` will drop faint strokes. Loosen, and
+   consider classifying on hue angle rather than channel differences.
+2. **Cell inset too aggressive.** The sample insets 11px horizontally and
+   12-16px vertically; marks that overrun their cell, which many do, get
+   clipped away. Try a smaller inset, or weight the cell centre.
+
+Do not write a row until its red count equals its Remarks figure. Three rows
+already pass, which shows the approach is sound — this is tuning, not redesign.
