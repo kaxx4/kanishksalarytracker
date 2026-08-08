@@ -1,0 +1,22 @@
+-- Paper-register import, batch 5: Calcutta Traders April - July 2025.
+-- Rules and method as recorded in 0009's header.
+--
+--   Apr 2025  118,721 +   700 = 119,421
+--   May 2025  121,930 +   810 = 122,740
+--   Jun 2025  126,830 +   920 = 127,750
+--   Jul 2025  138,137 + 1,030 = 139,167
+--
+-- Readings the arithmetic settled: Surajit Pal's April rate reads 30,080 but
+-- only 30,000 gives 30,000 + 260 - 150 = 30,110, and May's page confirms it
+-- independently (30,000 + 230 - 150 = 30,080). Birender's April tiffin reads
+-- 280 but only 260 gives 13,890.
+--
+-- Ankit Kumar is new and created inactive. Ramnaresh Bhagat appears on CT in
+-- April and moves to MKCP in May; he keeps the one record, so the CT line and
+-- the later MKCP lines point at the same person.
+--
+-- The employer here reads "Vivekanand Agarwal" in April and "V.N. Agarwal"
+-- thereafter — the same name, long and short.
+--
+-- Applied as import_ct_2025_04 through import_ct_2025_07 in the Supabase
+-- migration history.
