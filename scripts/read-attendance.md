@@ -338,8 +338,19 @@ needed and did not get.
 | 36 | MKCP Jun 2025 | 8 | 5 of 8 | Shambhu 7v8, Upender 20v24, Ramnaresh 19v23 |
 | 37 | MKCP Jul 2025 | 8 | 7 of 8 | Shambhu 11 v 12 |
 | 38 | MKCP Aug 2025 | 8 | **8 of 8** | clean month, nothing flagged |
+| 39 | MKCP Sep 2025 | 7 | **7 of 7** | Durga Puja closure on 29-30 |
+| 40 | MKCP Oct 2025 | 7 | 6 of 7 | Mahesh 11 v 12; three festival closures |
 
-Remaining: photos 39-50, twelve months, MKCP September 2025 through August 2026.
+Remaining: photos 41-50, ten months, MKCP November 2025 through August 2026.
+
+### Festival closures
+
+The register marks the firm's own shutdowns in red down the affected columns —
+Durga Puja (Sep 29-30 and Oct 1-2), Lakhi Puja (Oct 6), Dipawali "Closed"
+(Oct 21-23). These are the business closing, not people being absent, so they
+are written as present. That is also the app's own default for an unmarked
+working day, so the register reads the same either way, and no one is docked
+for a day the firm chose not to open.
 
 `FAB` in the Remarks column means absent the whole month, and it reconciles
 exactly — both FAB men in June show 25 absences against 25 working days, and
