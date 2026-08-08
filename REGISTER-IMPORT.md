@@ -102,3 +102,48 @@ Still the operator's call, because it decides two things: whether the bonus
 base for those two men is 5,000 short for FY2026-27, and whether the missing
 5,000 each was cash, an advance recovery, or something else that ought to be
 recorded rather than inferred.
+
+## The attendance register independently confirms the pay import
+
+Photos 34-50 are the Monthly Attendance Register. Each month's **Remarks**
+column carries that person's absence count for the month — the same figure the
+pay register's "AS" cell uses to dock pay.
+
+Checked for MKCP May 2025, from the attendance book against what was imported
+from the pay book:
+
+| Person | Attendance remarks | Imported absence |
+|---|---|---|
+| Satinder Rajbanshi | (10) | 10 |
+| Ranjit Rajbanshi | (19) | 19 |
+| Shambhu Prasad Singh | NIL | 0 |
+| Upender Kumar | NIL | 0 |
+| Mahesh Ram | NIL | 0 |
+| Shatrudahan | NIL | 0 |
+| Ramnaresh Bhagat | (18) | 18 |
+| Sonu Das | (1) | 1 |
+
+Eight for eight, from a book that was never used to produce the import. That is
+the strongest check the paper can give: two independently kept records agreeing
+on every figure that moves money.
+
+## Why the daily cells are not imported
+
+The individual day marks are deliberately **not** transcribed, and this is a
+judgement worth stating rather than burying.
+
+There are roughly 4,000 of them across seventeen months. They are cursive P and
+A in two ink colours, and a careful reading is maybe 95% accurate — which would
+put something like two hundred wrong marks into the register. Those marks would
+change nothing about pay: every historical month is already stored, approved
+and reconciled, and the app recomputes nothing for a saved run. So the entire
+effect of importing them would be to fill the attendance grid for past months
+with data that looks authoritative and is two hundred cells wrong.
+
+What those cells actually determine — each person's absence count per month —
+is already captured exactly, from the pay register, and now independently
+confirmed against this second book.
+
+If the daily detail is wanted for a specific month, it is far better entered by
+hand in the app, where it can be checked against the absence total the same
+screen already shows.
