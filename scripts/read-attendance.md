@@ -168,3 +168,32 @@ low volume) should fall away with the same guard.
 That is where to start next. The method is right, the geometry is right, the
 counts to solve toward are right, and four of nine rows already produce specific
 dates. What remains is an ink floor and a re-run.
+
+## Pass 4 — ink floor. Five of nine, and the wall is real.
+
+Adding an absolute ink floor before a cell can count as absent (`red >= 220`
+pixels and `red > blue`) reaches five rows: Ranjit, Shambhu, Shatrudahan, Rahul
+and now Abhishek at exactly 12.
+
+| floor | reconciling | counts vs 16,2,0,0,18,0,1,-,12 |
+|---|---|---|
+| 30 | 4 | 14,2,0,1,15,0,1,22,14 |
+| 100 | 4 | 14,2,0,1,15,0,1,22,13 |
+| **220** | **5** | 11,2,0,1,15,0,1,22,**12** |
+| 300 | 5 | 9,2,0,1,15,0,1,22,12 |
+
+Three rows resist every setting. Satinder and Mahesh under-count at any floor —
+raising it makes them worse, lowering it breaks Abhishek — and Upender holds a
+single phantom mark on day 12. There is no floor that satisfies all three at
+once, which says the remaining error is not a threshold at all.
+
+Most likely those rows' marks differ physically: a lighter pen, a different
+hand, or absences written as something other than a bold red A. Distinguishing
+that needs pixels the two-page spread does not contain.
+
+## Do not write partial months
+
+Tempting, but wrong. The app treats an unmarked working day as present. Writing
+only the rows that reconcile would leave Satinder and Mahesh — the two people
+with the most absences that month — looking fully present, which is worse than
+leaving the month empty. A month goes in whole or not at all.
