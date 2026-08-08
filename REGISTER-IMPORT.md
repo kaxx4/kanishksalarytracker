@@ -127,23 +127,46 @@ Eight for eight, from a book that was never used to produce the import. That is
 the strongest check the paper can give: two independently kept records agreeing
 on every figure that moves money.
 
-## Why the daily cells are not imported
+## Why the daily cells are not imported (tried, and blocked)
 
-The individual day marks are deliberately **not** transcribed, and this is a
-judgement worth stating rather than burying.
+The individual day marks are **not** transcribed. This was attempted and
+abandoned on evidence, not preference.
 
-There are roughly 4,000 of them across seventeen months. They are cursive P and
-A in two ink colours, and a careful reading is maybe 95% accurate — which would
-put something like two hundred wrong marks into the register. Those marks would
-change nothing about pay: every historical month is already stored, approved
-and reconciled, and the app recomputes nothing for a saved run. So the entire
-effect of importing them would be to fill the attendance grid for past months
-with data that looks authoritative and is two hundred cells wrong.
+The method was sound: each row's Remarks cell gives that person's absence count,
+so a transcribed row can be checked by counting the A marks against it — the
+same self-check that made the pay registers trustworthy.
+
+It failed on the first row tried. Satinder Rajbanshi, April 2025: the daily
+cells read as 14 absences, the Remarks cell says 16. Worse, the two cannot be
+reconciled by re-reading. April 2025 has 26 non-Sunday days, 13 of them in the
+first half of the month, and the second half shows one clear absence — so 16
+absences cannot be distributed across the marks as they appear. Either the
+reading is wrong in a way the check cannot locate, or the register's own daily
+marks do not sum to its own Remarks.
+
+Raising the resolution was tried too: the photograph was rendered to a canvas,
+cropped to a single row and scaled up in the browser. The preview pane
+downscales its screenshots, so this returned **less** detail than the original
+file, not more. At the resolution available, these cells cannot be read to a
+standard that survives their own check.
+
+There are roughly 4,000 of them across seventeen months. Writing them at the
+accuracy actually achievable would put on the order of two hundred wrong marks
+into the register — marks that would change no pay, because every historical
+month is already stored, approved and reconciled and the app recomputes nothing
+for a saved run, but that would sit in the attendance grid looking
+authoritative.
 
 What those cells actually determine — each person's absence count per month —
 is already captured exactly, from the pay register, and now independently
 confirmed against this second book.
 
-If the daily detail is wanted for a specific month, it is far better entered by
-hand in the app, where it can be checked against the absence total the same
-screen already shows.
+Two ways to get the daily detail if it is wanted:
+
+1. **Re-photograph the attendance pages closer** — one page per shot rather
+   than a two-page spread, and square to the page. At roughly double the
+   current pixels per cell the row check would start passing, and the import
+   could then proceed row by row with each row verified against its own
+   Remarks count.
+2. **Enter a month by hand in the app**, where the Abs column on the same
+   screen checks the work as it is typed.
