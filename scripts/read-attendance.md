@@ -233,3 +233,39 @@ Next session, in this order:
 3. Only then revisit thresholds, and re-test the rows that currently pass. A
    row that reconciles for the wrong reason is worse than one that fails
    honestly.
+
+## Pass 6 — alignment fixed, and the check itself turns out to be unsound
+
+Excluding the page gutter from the ink profile finally produced nine real row
+bands. Centres at 525, 650, 773, 887, 1014, 1124, 1242, 1355, 1497 — against
+which the earlier line-derived boundaries were 10-30px out on the first rows,
+which is where two of the three failures were. Sampling those centres +/-42px
+produces coherent rows at last: clean unbroken P for Shambhu and Shatrudahan,
+and Upender's phantom mark gone.
+
+Then the real problem appeared, and it is not the classifier.
+
+**The daily A-count does not map consistently onto the pay register.** Three
+people, three different relationships:
+
+| Person | A marks read | AS on pay register | Net docked (AS - Ad) |
+|---|---|---|---|
+| Satinder Rajbanshi | 14 | 16 | **14** |
+| Mahesh Ram | 15 | 18 | 16 |
+| Abhishek Kumar | 16 | 12 | 10 |
+
+Satinder's 14 matches his net docked days exactly, and his pay confirms it:
+13,900/30 x 16 paid days = 7,414, as recorded. So 14 is very likely *right* and
+the target of 16 was wrong. Mahesh is one short of his net. Abhishek exceeds
+both his AS and his net.
+
+That breaks the premise this whole approach rested on — that a row could be
+validated by matching its red-cell count against a known figure. There is no
+single known figure to match: sometimes the marks equal net docked days,
+sometimes neither. Until it is understood *why* (paid leave marked as A? days
+worked at another company? a correction made on the pay side only?), a matching
+count proves nothing and a mismatching one condemns nothing.
+
+**Stop here.** The next step is not more code. It is to ask the operator what
+the daily A marks are supposed to mean relative to the AS and Ad figures on the
+pay register, because those two books evidently do not record the same thing.
