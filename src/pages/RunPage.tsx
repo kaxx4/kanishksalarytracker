@@ -388,8 +388,8 @@ export default function RunPage() {
           </span>
         </h2>
 
-        <div className="leaf overflow-x-auto">
-          <table className="w-full">
+        <div className="leaf overflow-x-auto sm:overflow-x-auto">
+          <table className="stack-sm w-full">
             <thead>
               <tr>
                 <th className="th">Employee</th>
@@ -415,52 +415,52 @@ export default function RunPage() {
                       muted ? 'text-ink-4' : ''
                     }`}
                   >
-                    <td className="td font-medium">
+                    <td className="td font-medium" data-label="Employee">
                       {line.name}
                       {muted && <span className="tag ml-2 text-ink-4">off run</span>}
                     </td>
-                    <td className="td tnum text-right text-ink-2">{inr(line.monthlyPay)}</td>
-                    <td className="td text-right">
+                    <td className="td tnum text-right text-ink-2" data-label="Monthly pay">{inr(line.monthlyPay)}</td>
+                    <td className="td text-right" data-label="Absent">
                       <Cell
                         value={line.absence}
                         edited={isEdited(line.employeeId, 'absence')}
                         onChange={(v) => set(line.employeeId, { absence: v })}
                       />
                     </td>
-                    <td className="td text-right">
+                    <td className="td text-right" data-label="Leave">
                       <Cell
                         value={line.leavePay}
                         edited={isEdited(line.employeeId, 'leavePay')}
                         onChange={(v) => set(line.employeeId, { leavePay: v })}
                       />
                     </td>
-                    <td className="td text-right">
+                    <td className="td text-right" data-label="Tiffin">
                       <Cell
                         value={line.tiffin}
                         edited={entries[line.employeeId]?.tiffinOverride !== undefined}
                         onChange={(v) => set(line.employeeId, { tiffinOverride: v })}
                       />
                     </td>
-                    <td className="td tnum text-right">{inr(line.gross, { paise: true })}</td>
-                    <td className="td tnum text-right text-ink-2">{inr(line.ptax)}</td>
-                    <td className="td text-right">
+                    <td className="td tnum text-right" data-label="Gross">{inr(line.gross, { paise: true })}</td>
+                    <td className="td tnum text-right text-ink-2" data-label="P-Tax">{inr(line.ptax)}</td>
+                    <td className="td text-right" data-label="TDS">
                       <Cell
                         value={line.tds}
                         edited={!!line.tds}
                         onChange={(v) => set(line.employeeId, { tds: v })}
                       />
                     </td>
-                    <td className="td text-right">
+                    <td className="td text-right" data-label="Advance">
                       <Cell
                         value={line.advance}
                         edited={!!line.advance}
                         onChange={(v) => set(line.employeeId, { advance: v })}
                       />
                     </td>
-                    <td className="td tnum text-right text-[15px] font-semibold">
+                    <td className="td tnum text-right text-[15px] font-semibold" data-label="Payable">
                       {inr(line.rounded)}
                     </td>
-                    <td className="td">
+                    <td className="td" data-label="Mode">
                       <select
                         className="rounded-[2px] border border-transparent bg-transparent px-1 py-0.5
                                    font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3

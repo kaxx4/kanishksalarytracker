@@ -30,7 +30,7 @@ export default function EmployeesPage() {
       </div>
 
       <div className="rise leaf overflow-x-auto" style={{ animationDelay: '60ms' }}>
-        <table className="w-full">
+        <table className="stack-sm w-full">
           <thead>
             <tr>
               <th className="th">Name</th>
@@ -55,27 +55,28 @@ export default function EmployeesPage() {
                   }`}
                   style={{ animationDelay: `${80 + i * 20}ms` }}
                 >
-                  <td className="td font-medium">
+                  <td className="td font-medium" data-label="Employee">
                     {e.name}
                     {e.is_director && <span className="tag ml-2 text-ink-3">Director</span>}
                   </td>
                   <td
                     className={`td ${mismatch ? 'text-ochre' : 'text-ink-3'}`}
+                    data-label="Beneficiary"
                     title={mismatch ? 'Differs from the salary-sheet name' : undefined}
                   >
                     {e.beneficiary_name}
                     {mismatch && <span className="ml-1.5 text-[0.625rem]">≠</span>}
                   </td>
-                  <td className="td tnum text-right">{inr(e.monthly_pay)}</td>
-                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">
+                  <td className="td tnum text-right" data-label="Monthly pay">{inr(e.monthly_pay)}</td>
+                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3" data-label="Tiffin">
                     {e.tiffin_eligible ? 'Auto' : '—'}
                   </td>
-                  <td className="td font-mono text-[0.6875rem] text-ink-2">{e.bank_ifsc || '—'}</td>
-                  <td className="td tnum text-[0.6875rem] text-ink-2">{e.bank_account_no || '—'}</td>
-                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3">
+                  <td className="td font-mono text-[0.6875rem] text-ink-2" data-label="IFSC">{e.bank_ifsc || '—'}</td>
+                  <td className="td tnum text-[0.6875rem] text-ink-2" data-label="Account">{e.bank_account_no || '—'}</td>
+                  <td className="td font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3" data-label="Mode">
                     {e.default_pay_mode === 'excluded' ? 'off run' : e.default_pay_mode}
                   </td>
-                  <td className="td text-right">
+                  <td className="td text-right" data-label="Status">
                     {e.active ? (
                       <span className="tag bg-verdigris-wash text-verdigris">On books</span>
                     ) : (

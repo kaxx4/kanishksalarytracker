@@ -188,6 +188,74 @@
     }
   }
 
+  /* --------------------------------------------------- table, on a phone */
+
+  /*
+    A ledger row is eleven columns wide. On a desk that is the point — the eye
+    runs across and compares. On a phone it means three quarters of the row
+    sits off-screen, and reading one person's pay becomes a sideways hunt.
+    Horizontal scrolling is the wrong answer for money you need to check.
+
+    Below the fold-out width each row becomes its own leaf: the name as a
+    heading, every figure on its own line against the label the column head
+    would have carried, and the payable set large because it is the number
+    being checked. Vertical scrolling only, nothing hidden.
+
+    Applied by adding `.stack-sm` to the table and `data-label` to each cell.
+  */
+  @media (max-width: 640px) {
+    .stack-sm,
+    .stack-sm tbody,
+    .stack-sm tr,
+    .stack-sm td {
+      display: block;
+      width: 100%;
+    }
+
+    .stack-sm thead {
+      display: none;
+    }
+
+    .stack-sm tr {
+      @apply mb-2 rounded-sm border border-paper-edge bg-paper-raised px-3 py-2;
+    }
+
+    .stack-sm td {
+      @apply flex items-baseline justify-between gap-4 border-0 border-b border-rule px-0 py-1.5
+             text-right;
+    }
+    .stack-sm td:last-child {
+      @apply border-b-0;
+    }
+
+    /* The column head, reissued as a label beside its own figure. */
+    .stack-sm td::before {
+      content: attr(data-label);
+      @apply flex-none text-left font-mono text-[0.625rem] uppercase tracking-stamp text-ink-3;
+    }
+
+    /* The name leads the card rather than sitting in a labelled row. */
+    .stack-sm td[data-label='Employee'] {
+      @apply mb-1 justify-start border-b-[1.5px] border-rule-strong pb-2 text-left
+             font-display text-lg;
+    }
+    .stack-sm td[data-label='Employee']::before {
+      content: none;
+    }
+
+    /* The figure being checked. */
+    .stack-sm td[data-label='Payable'],
+    .stack-sm td[data-label='Bonus'],
+    .stack-sm td[data-label='Total'] {
+      @apply text-[1.05rem] font-semibold;
+    }
+
+    /* A cell with nothing in it earns no line on a small screen. */
+    .stack-sm td:empty {
+      display: none;
+    }
+  }
+
   /* --------------------------------------------------------------- table */
 
   /* Column heads sit under a strong rule, like a ledger's ruled header. */
