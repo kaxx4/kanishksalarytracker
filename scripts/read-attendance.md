@@ -309,3 +309,22 @@ The daily marks and the pay register's AS figures do not agree for everyone.
 Satinder's marks equal his *net* docked days, Mahesh reads one under his net,
 Abhishek reads more than either of his. Worth asking what the two books are each
 meant to record before leaning on the attendance view for anything financial.
+
+## Pass 8 — auto-geometry does not generalise
+
+An attempt to make the geometry self-deriving, so photos could be batched,
+failed on the very next photograph. Photo 35 returned two row bands instead of
+nine and a left-column step of 72px against the expected 88.
+
+The books are shot handheld at different distances and angles, so every
+photograph needs its grid derived and eyeballed once before its cells can be
+read. That is roughly three exchanges per photograph — find the rows, confirm
+the columns, classify and write — and sixteen photographs remain.
+
+So the position is: the **method is proven and April 2025 is imported**, but
+each remaining month costs a calibration pass. That is a grind, not a puzzle.
+
+**Re-photographing remains the shortcut and now more clearly so.** One page per
+shot, square to the page, at a consistent distance would make the geometry
+near-identical across photographs — which is exactly what the batching attempt
+needed and did not get.
