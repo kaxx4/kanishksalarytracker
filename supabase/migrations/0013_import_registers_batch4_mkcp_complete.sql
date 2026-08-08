@@ -1,0 +1,29 @@
+-- Paper-register import, batch 4: MKCP November 2025 - March 2026.
+-- This completes MKCP: April 2025 through July 2026, sixteen consecutive
+-- months, and a full twelve-month FY2025-26 for the bonus.
+--
+--   Nov 2025  104,102 +   680 = 104,782
+--   Dec 2025  108,497 +   770 = 109,267
+--   Jan 2026  115,733 +   880 = 116,613
+--   Feb 2026  117,513 +   880 = 118,393
+--   Mar 2026  151,885 + 1,020 = 152,905
+--
+-- Readings the arithmetic settled rather than the eye:
+--   * Nov, Shambhu Prasad Singh reads 12,482; 14,750/30 x 25 - 110 = 12,182,
+--     and only 12,182 makes the month total.
+--   * Mar, Shatrudahan's leave pay reads 5,396; 15,000 + 5,806 - 130 = 20,676
+--     fixes it at 5,806.
+--
+-- Rates step 13,900 -> 14,750 (Oct 2025) -> 15,000 (Dec 2025), read off each
+-- page rather than assumed.
+--
+-- January's two 5,000 advance recoveries are recorded in the run note, not as
+-- `advance` against payable: the register totals on wages, and reducing
+-- payable would understate both men's bonus-eligible wage.
+--
+-- The fourth column is not one thing across the years — tiffin, then arrears,
+-- then leave pay. All of them sit inside payable and count toward the bonus;
+-- the `arrears` column holds whichever the page shows so Form M can print it.
+--
+-- Applied as import_mkcp_2025_11_and_12, import_mkcp_2026_01_and_02 and
+-- import_mkcp_2026_03_leave_pay in the Supabase migration history.
