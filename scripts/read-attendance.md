@@ -133,3 +133,38 @@ That points away from more threshold tuning and toward one of:
 Satyajit's row landing on 22 is worth noting: that figure was derived purely
 from his pay (16,000 over 30 days against 2,173 paid) and the pixels agreed
 independently. When the classifier is right, it is right for the right reason.
+
+## Pass 3 — ranking, not thresholding. This is the right shape.
+
+Instead of asking "is this cell red?", rank the row's cells by redness
+`red/(red+blue+1)` and take the top N, where N is the absence count already
+known from the pay register. The count says *how many*; the pixels only have to
+say *which*. Accept the row only when the cutoff is unambiguous — a real gap
+between the Nth and (N+1)th cell.
+
+Redness turns out to be **bimodal**: cells sit at 1.00 or 0.00, not smeared
+across the middle. That is exactly what makes ranking viable.
+
+Four rows resolve cleanly, with days:
+
+| Person | N | Result |
+|---|---|---|
+| Ranjit Rajbanshi | 2 | days 29, 30 — gap 0.82 |
+| Shambhu Prasad Singh | 0 | all present — gap 1.00 |
+| Shatrudahan | 0 | all present — gap 0.99 |
+| Rahul Sarkar | 1 | day 19 — gap 0.98 |
+
+Three fail, and the reason has changed: Satinder (16), Mahesh (18) and Abhishek
+(12) now show **more** cells at redness 1.00 than their count allows, where the
+threshold approach had them under-counting. The cause is that redness is a
+*ratio* — a cell holding two stray red pixels and no blue scores 1.00 just as a
+boldly written A does.
+
+**The fix is one line: require a minimum ink volume before a cell enters the
+ranking.** Something like `red >= 40` absolute pixels, tuned against the four
+rows that already pass. Upender's lone false positive on day 12 (redness 0.66,
+low volume) should fall away with the same guard.
+
+That is where to start next. The method is right, the geometry is right, the
+counts to solve toward are right, and four of nine rows already produce specific
+dates. What remains is an ink floor and a re-run.
