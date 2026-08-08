@@ -1,0 +1,19 @@
+-- Paper-register import, batch 7: Calcutta Traders January - April 2026.
+-- This closes CT out. Both companies now run April 2025 -> July 2026,
+-- sixteen consecutive months each, with no run missing its lines.
+--
+--   Jan 2026  151,785 + 1,110 = 152,895
+--   Feb 2026  144,316 + 1,000 = 145,316
+--   Mar 2026  179,867 + 1,090 = 180,957
+--   Apr 2026  154,591 + 1,090 = 155,681
+--
+-- Readings the arithmetic settled:
+--   * Mar, Abhishek Kumar reads 19,848; 14,100 + 220 + 5,458 - 130 = 19,648,
+--     and only 19,648 makes the month total.
+--   * Apr, Birender Kr Shaw's rate reads 15,470; only 15,490 gives 15,610,
+--     matching Bapi Mondal's rate on the same page.
+--
+-- March carries tiffin and leave pay together in the fourth column; both are
+-- stored, and both count toward the bonus-eligible wage.
+--
+-- Applied as import_ct_2026_01 through import_ct_2026_04.
