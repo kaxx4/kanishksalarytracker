@@ -144,11 +144,18 @@ absences cannot be distributed across the marks as they appear. Either the
 reading is wrong in a way the check cannot locate, or the register's own daily
 marks do not sum to its own Remarks.
 
-Raising the resolution was tried too: the photograph was rendered to a canvas,
-cropped to a single row and scaled up in the browser. The preview pane
-downscales its screenshots, so this returned **less** detail than the original
-file, not more. At the resolution available, these cells cannot be read to a
-standard that survives their own check.
+Raising the resolution was then solved, and the constraint turned out to be
+throughput rather than legibility. Rendering the photograph to a canvas,
+cropping to a few day-columns and magnifying about 3x makes the cells plainly
+readable — day 16 a red A, 17 to 19 blue P, 20 the red Sunday stroke, where the
+flat photograph showed only ambiguous strokes.
+
+The limit is the preview pane. It stops compositing above roughly 1600x600 and
+returns screenshots at half the viewport, so one capture holds about six
+day-columns across a few rows. A month of nine people and thirty-one days needs
+on the order of a dozen captures, and seventeen months needs something like two
+hundred. That is not a judgement about accuracy any more — it is simply more
+round trips than a session has.
 
 There are roughly 4,000 of them across seventeen months. Writing them at the
 accuracy actually achievable would put on the order of two hundred wrong marks
@@ -164,9 +171,9 @@ confirmed against this second book.
 Two ways to get the daily detail if it is wanted:
 
 1. **Re-photograph the attendance pages closer** — one page per shot rather
-   than a two-page spread, and square to the page. At roughly double the
-   current pixels per cell the row check would start passing, and the import
-   could then proceed row by row with each row verified against its own
-   Remarks count.
+   than a two-page spread, and square to the page. This is the cheap fix: it
+   collapses the job from roughly two hundred browser captures to seventeen
+   ordinary reads, because the cells become legible in the file itself. Ten
+   minutes with the phone replaces several sessions of grinding.
 2. **Enter a month by hand in the app**, where the Abs column on the same
    screen checks the work as it is typed.
