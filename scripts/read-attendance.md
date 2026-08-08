@@ -328,3 +328,32 @@ each remaining month costs a calibration pass. That is a grind, not a puzzle.
 shot, square to the page, at a consistent distance would make the geometry
 near-identical across photographs — which is exactly what the batching attempt
 needed and did not get.
+
+## Progress log — attendance months imported
+
+| Photo | Month | Rows | Reconciling | Notes |
+|---|---|---|---|---|
+| 34 | MKCP Apr 2025 | 9 | 6 of 9 | Satinder's 14 equals his net docked days |
+| 35 | MKCP May 2025 | 8 | 6 of 8 | Ranjit 14 vs 19, Ramnaresh 15 vs 18 |
+
+Remaining: photos 36-50, fifteen months, MKCP June 2025 through August 2026.
+
+### Reading photo 35 by eye beat the classifier
+
+Worth recording: photo 35 defeated the automatic geometry entirely — two row
+bands found instead of eight, columns clustered in one strip — but reading the
+page directly worked, and six of eight rows reconciled first time. The Sunday
+strokes fell exactly on 4, 11, 18 and 25, which is May 2025's Sundays, and that
+alone confirms the column alignment without any detection at all.
+
+So for the remaining photographs, **read the page rather than calibrate it**.
+The Remarks column checks each row, the Sunday strokes check the columns, and
+both are visible at the resolution the file already has. The classifier was
+worth building for the dense months, but it is not the fast path.
+
+### Unreconciled rows are written anyway, and flagged
+
+An unmarked working day counts as present in this app. Omitting a row that
+cannot be verified would therefore show someone with heavy absence as having
+perfect attendance — a far larger error than a few missed cells. Rows are
+written as read, and every shortfall is named in the migration that carries it.
