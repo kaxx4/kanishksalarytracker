@@ -94,3 +94,42 @@ rather than misreading colour. Two likely causes, in order:
 
 Do not write a row until its red count equals its Remarks figure. Three rows
 already pass, which shows the approach is sound — this is tuning, not redesign.
+
+## Tuning pass 2 — better, still not writable
+
+Loosening the ink test (paper `>232`, rule `<60`, saturation `max-min>=18`,
+red when `R` dominant and `R-B>14`, blue when `B` dominant and `B-R>10`) and
+cutting the inset to 3px horizontal / 8px vertical moved it from three rows to
+four:
+
+| Person | Detected | Expected |
+|---|---|---|
+| Satinder Rajbanshi | 14 | 16 |
+| Ranjit Rajbanshi | 2 | 2 ✓ |
+| Shambhu Prasad Singh | 0 | 0 ✓ |
+| Upender Kumar | 1 | 0 |
+| Mahesh Ram | 15 | 18 |
+| Shatrudahan | 0 | 0 ✓ |
+| Rahul Sarkar | 1 | 1 ✓ |
+| Satyajit Dey Adhicary | 22 | 22 (derived independently from his pay) |
+| Abhishek Kumar | 14 | 12 |
+
+A grid search over inset, vertical inset, minimum ink and red/blue ratio found
+nothing better than four. The interesting part is *how* it fails: Satinder and
+Mahesh still under-count while Abhishek now over-counts, on the same settings.
+So there is no single threshold that fits every row — the ink weight varies by
+person, some pressing hard in biro and others barely marking.
+
+That points away from more threshold tuning and toward one of:
+
+- **Per-row adaptive thresholding.** Compute each row's own ink distribution
+  and split it, rather than applying global constants. The Remarks count gives
+  a target to solve toward: pick the threshold that makes the row's red count
+  equal its Remarks figure, and accept the row only if that threshold is
+  unambiguous.
+- **Better source photographs**, which removes the problem rather than
+  modelling it.
+
+Satyajit's row landing on 22 is worth noting: that figure was derived purely
+from his pay (16,000 over 30 days against 2,173 paid) and the pixels agreed
+independently. When the classifier is right, it is right for the right reason.
