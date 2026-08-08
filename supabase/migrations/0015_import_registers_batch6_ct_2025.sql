@@ -1,0 +1,20 @@
+-- Paper-register import, batch 6: Calcutta Traders August - December 2025.
+--
+--   Aug 2025  132,791 +   920 = 133,711
+--   Sep 2025  137,921 + 1,030 = 138,951
+--   Oct 2025  191,047 + 1,200 = 192,247
+--   Nov 2025  124,402 +   810 = 125,212
+--   Dec 2025  150,854 + 1,110 = 151,964
+--
+-- October is the month CT pays arrears, and unlike MKCP its page writes BOTH
+-- tiffin ("T-") and the arrears figure ("+") stacked in the same cell, so both
+-- columns are populated. Every one of the nine lines reconciles individually,
+-- e.g. Surajit Pal 32,500 + 220 + 15,000 - 200 = 47,520.
+--
+-- Rates rise twice: across the board in October, and again for several people
+-- in December. Read off each page rather than carried forward.
+--
+-- Avijit Pal joins in December. Vikash Kumar Rao is "FAB" in November and gets
+-- no line.
+--
+-- Applied as import_ct_2025_08 through import_ct_2025_12.
