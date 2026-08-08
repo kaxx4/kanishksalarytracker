@@ -340,8 +340,24 @@ needed and did not get.
 | 38 | MKCP Aug 2025 | 8 | **8 of 8** | clean month, nothing flagged |
 | 39 | MKCP Sep 2025 | 7 | **7 of 7** | Durga Puja closure on 29-30 |
 | 40 | MKCP Oct 2025 | 7 | 6 of 7 | Mahesh 11 v 12; three festival closures |
+| 41 | MKCP Nov 2025 | 7 | 3 of 7 | four short; Guru Nanak Jayanti on the 5th |
+| 42 | MKCP Dec 2025 | 8 | 7 of 8 | Shambhu 9 v 10; Upender rejoins on the 27th |
 
-Remaining: photos 41-50, ten months, MKCP November 2025 through August 2026.
+Remaining: photos 43-50, eight months, MKCP January through August 2026.
+
+### The shortfall is systematic, not random
+
+Across every month, rows that miss their Remarks figure miss it in the **same
+direction** — the daily marks read fewer absences than AS, never more — and
+roughly in proportion to how many absences the person had. November is the
+clearest case: Shambhu 6 v 7, Mahesh 6 v 8, Bharat 14 v 16, Ramnaresh 17 v 20.
+
+That is not what a misreading looks like; misreadings scatter. It looks like the
+two books counting slightly different things, which is the same conclusion the
+pay-register comparison reached from the other side. One likely explanation: AS
+includes days the daily register leaves blank rather than marking, such as
+leave taken and later credited as Ad. Worth confirming with the operator, since
+it would retire every flag at once.
 
 ### Festival closures
 
