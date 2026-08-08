@@ -197,3 +197,39 @@ Tempting, but wrong. The app treats an unmarked working day as present. Writing
 only the rows that reconcile would leave Satinder and Mahesh — the two people
 with the most absences that month — looking fully present, which is worse than
 leaving the month empty. A month goes in whole or not at all.
+
+## Pass 5 — the row alignment itself is suspect. Start here.
+
+A doubt worth acting on before any more threshold work: **the rows that
+"reconcile" are the easy ones.** Two zeros, a one and a two. Every one of those
+would also pass if the sampling band sat partly *between* two rows and picked up
+little ink. The rows that fail are precisely the ones with many marks, where
+alignment error shows up.
+
+Two things support the doubt. The detected horizontal lines gave an anomalous
+70px gap at 429-499 where every other row is ~113px, so the first band is not
+like the others. And an ink profile taken straight down the day-column band
+does **not** resolve into nine even bands:
+
+```
+peak ink 553 px/row
+bands found: 988-1048, 1347-1375, 1461-1535, 1542-1620
+```
+
+Four ragged bands, not nine regular ones. Some of that is the page gutter around
+x 1950-2020 polluting the sample, which should be excluded, but it means row
+geometry was never actually confirmed — it was assumed from the line detector
+and then never tested independently.
+
+**So the five-of-nine result is not trustworthy, and neither is four-of-nine
+before it.** They may be partly coincidence.
+
+Next session, in this order:
+
+1. Rebuild the ink profile with the gutter excluded — sample x 700-1900 and
+   x 2050-3330 separately — and lower the band threshold until nine bands
+   appear. Those bands are the true rows.
+2. Re-derive row boundaries from the bands, not from the printed rules.
+3. Only then revisit thresholds, and re-test the rows that currently pass. A
+   row that reconciles for the wrong reason is worse than one that fails
+   honestly.
