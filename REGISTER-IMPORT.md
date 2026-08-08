@@ -63,3 +63,34 @@ Arun Kr Sah, Ankit Kumar.
 
 Say "continue the register import" — the rules above and the per-batch notes in
 migrations 0009-0016 carry everything needed.
+
+## Open discrepancy — CT July 2026, Surajit Pal
+
+The one real conflict the import has found. Not overwritten, per the rule.
+
+| | Register | Stored |
+|---|---|---|
+| Surajit Pal, paid | **35,620** | **30,620** |
+
+The other eight lines of that month match the photograph exactly.
+
+The stored row does not agree with itself: it holds a rate of 35,500 and tiffin
+of 270, and 35,500 + 270 - 150 = 35,620, not 30,620. The register is
+internally consistent; the stored figure is not.
+
+Against that, the stored month total of 1,10,785 is the figure that matches the
+signed bank letter and is pinned by `payroll.test.ts`. The register's staff
+subtotal is 1,15,785 — exactly 5,000 more.
+
+So one of these is true and I cannot tell which from the paper alone:
+
+1. Surajit was paid 30,620 by bank and 5,000 some other way, and the register
+   records his full entitlement while the letter records only the transfer.
+2. The stored 30,620 is a transcription error from the original seeding, and
+   both the bank letter and the test have been pinned to a wrong figure since.
+
+Reading (1) is more likely — the letter, the NEFT file and the test all agree
+on 1,10,785, and three independent artefacts are unlikely to share one typo.
+But it needs the operator, not a guess: if (2) is right, the fix is a data
+correction plus a test change, and Surajit's FY2026-27 bonus is 5,000 of wage
+short.
