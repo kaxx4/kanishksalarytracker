@@ -31,7 +31,7 @@ of them as tiffin would be wrong: the bonus engine subtracts tiffin.
 
 ## Done — pay registers, both companies complete
 
-Photos 1-26. **CT and MKCP each hold 16 consecutive months, April 2025 to
+Photos 1-27. **CT and MKCP each hold 16 consecutive months, April 2025 to
 July 2026, with no run missing its lines.** FY2025-26 is complete for both, so
 that bonus year can be computed rather than estimated.
 
@@ -39,14 +39,21 @@ Photo 26 (CT May 2026) is a re-photograph of a month already held; it matches
 the stored figures exactly, line for line — an independent check on the
 earlier backfill.
 
+Photo 27 is CT June 2026, which had been imported amounts-only because no
+photograph of it existed in the earlier set. Its totals match what was stored
+exactly, so the per-person detail was filled in behind figures that were
+already right. It also introduced overtime ("OT-500" beside Vikash Kumar Rao's
+tiffin) — another addition that sits inside payable and counts toward the
+bonus.
+
 New employees created inactive: Upender Kumar, Satyajit Dey Adhicary, Sonu Das,
 Arun Kr Sah, Ankit Kumar.
 
 ## Remaining
 
-- **Photos 27-33** — expected to be further re-photographs of 2026 months
-  already held (CT Jun/Jul, MKCP Apr-Jul). To be read and compared, not
-  imported, unless one turns out to be a month not yet stored.
+- **Photos 28-33** — expected to be further re-photographs of 2026 months
+  already held (CT Jul, MKCP Apr-Jul). To be read and compared, not imported,
+  unless one carries detail a month is still missing, as photo 27 did.
 - **Photos 34-50** — the Monthly Attendance Register, April 2025 to August
   2026, seventeen months of day-by-day P/A marks. Not yet imported. These can
   be cross-checked against the absence counts the pay registers already imply,
