@@ -106,7 +106,7 @@ export default function BonusPage() {
       }
       const linesRes = await supabase
         .from('salary_run_lines')
-        .select('run_id, employee_id, payable, ptax, tiffin')
+        .select('run_id, employee_id, payable, ptax, tiffin, tds, advance')
         .in(
           'run_id',
           runs.map((r) => r.id),
@@ -134,6 +134,8 @@ export default function BonusPage() {
           payable: Number(line.payable),
           ptax: Number(line.ptax),
           tiffin: Number(line.tiffin),
+          tds: Number(line.tds),
+          advance: Number(line.advance),
         })
         agg[line.employee_id] ??= {}
         agg[line.employee_id][mk] = (agg[line.employee_id][mk] ?? 0) + wage
@@ -406,10 +408,14 @@ export default function BonusPage() {
           <ol className="mt-3 list-decimal space-y-1.5 pl-5">
             <li>
               <span className="font-medium text-ink">Each month's figure</span> is{' '}
-              <span className="tnum font-mono text-[0.75rem]">payable + P.Tax − tiffin</span> from that
-              month's saved Month End run — the Payment of Bonus Act's definition of bonus-eligible
-              wage (it adds back what P.Tax would otherwise have deducted, and strips the tiffin
-              allowance, which the Act treats as a special allowance rather than wage).
+              <span className="tnum font-mono text-[0.75rem]">
+                payable + P.Tax + TDS + advance − tiffin
+              </span>{' '}
+              from that month's saved Month End run — the Payment of Bonus Act's definition of
+              bonus-eligible wage. It adds back everything withheld on the way to the bank, since
+              P.Tax, TDS and a recovered advance are all deducted from an earned wage rather than
+              reducing it, and strips the tiffin allowance, which the Act treats as a special
+              allowance rather than wage.
             </li>
             <li>
               <span className="font-medium text-ink">GROSS</span> (this page's "Annual wage") is the

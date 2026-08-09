@@ -39,9 +39,28 @@ export function fyLabel(fyStartYear: number): string {
   return `FY${fyStartYear}-${String(fyStartYear + 1).slice(2)}`
 }
 
-/** Bonus-eligible wage for one saved payroll month: payable + ptax - tiffin. */
-export function monthlyBonusWage(line: { payable: number; ptax: number; tiffin: number }): number {
-  return line.payable + line.ptax - line.tiffin
+/**
+ * Bonus-eligible wage for one saved payroll month.
+ *
+ * The Act counts what a person earned; `payable` is only what reached their
+ * bank, and the two differ by whatever was withheld on the way. P.Tax, TDS and
+ * a recovered advance are all deductions *from* an earned wage rather than
+ * reductions *of* it — an advance in particular is money the person has
+ * already been paid, so treating it as a shortfall would dock their bonus for
+ * having been paid early. Each is added back. Tiffin is an allowance and falls
+ * outside the Act's definition of wages, so it comes off.
+ *
+ * That makes this `gross - tiffin` by another name, and it is worth checking
+ * against the stored `gross` if these ever disagree.
+ */
+export function monthlyBonusWage(line: {
+  payable: number
+  ptax: number
+  tiffin: number
+  tds?: number
+  advance?: number
+}): number {
+  return line.payable + line.ptax + (line.tds ?? 0) + (line.advance ?? 0) - line.tiffin
 }
 
 export interface BonusEmployeeInput {

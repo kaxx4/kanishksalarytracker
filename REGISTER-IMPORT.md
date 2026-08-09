@@ -64,44 +64,40 @@ Arun Kr Sah, Ankit Kumar.
 Say "continue the register import" — the rules above and the per-batch notes in
 migrations 0009-0016 carry everything needed.
 
-## Open discrepancy — July 2026, both companies
+## Resolved — July 2026, both companies
 
-The only real conflict the import has found — and it appears **twice**, in the
-same month, in both companies. Not overwritten, per the rule.
+The import found one real conflict, appearing **twice**: the same month, the
+same 5,000 to the rupee, in both companies.
 
-| Month | Person | Register | Stored | Difference |
+| Month | Person | Register | Reached the bank | Difference |
 |---|---|---|---|---|
-| CT July 2026 | Surajit Pal | **35,620** | **30,620** | -5,000 |
-| MKCP July 2026 | Sunil Kr Tiwari | **18,000** | **13,000** | -5,000 |
+| CT July 2026 | Surajit Pal | 35,620 | 30,620 | 5,000 |
+| MKCP July 2026 | Sunil Kr Tiwari | 18,000 | 13,000 | 5,000 |
 
-Every other line in both months matches the photographs exactly.
+**Both were advances**, confirmed by the operator. The register records what
+each man earned; the bank letter records what still had to be transferred after
+an advance already paid was recovered. Nothing was wrong with either book, and
+nothing was wrong with the stored data either — both rows already carried
+`advance = 5000`, so the comparison above was reading an entitlement against a
+payment and calling the difference a gap.
 
-The stored row does not agree with itself: it holds a rate of 35,500 and tiffin
-of 270, and 35,500 + 270 - 150 = 35,620, not 30,620. The register is
-internally consistent; the stored figure is not.
+The stored month total of 1,10,785 remains the figure on the signed bank letter
+and stays pinned by `payroll.test.ts`. The register's staff subtotal of
+1,15,785 is the entitlement. Both are correct; they are answers to different
+questions.
 
-Against that, the stored month total of 1,10,785 is the figure that matches the
-signed bank letter and is pinned by `payroll.test.ts`. The register's staff
-subtotal is 1,15,785 — exactly 5,000 more.
+### What this did expose
 
-So one of these is true and I cannot tell which from the paper alone:
+The bonus engine was computing each month's eligible wage as
+`payable + P.Tax - tiffin`, and `payable` is net of advance and TDS. So a
+recovered advance quietly docked the bonus of the person who took it — Sunil's
+July wage counted as 13,000 rather than the 18,000 he earned. Fixed in
+`src/calc/bonus.ts`: TDS and advance are now added back alongside P.Tax, since
+all three are withheld from an earned wage rather than reducing it.
 
-1. Each man was paid 5,000 some way other than the bank transfer, so the
-   register records entitlement while the letter records only what moved
-   through the bank.
-2. The stored figures are transcription errors from the original seeding, and
-   the bank letters and `payroll.test.ts` have been pinned to them since.
-
-Reading (1) is now much the more likely. It is not one anomaly but two: two
-separate registers, two different companies, two different people, the same
-month, and the same 5,000 to the rupee. A transcription error does not
-reproduce itself that precisely across two books, whereas a standing practice
-of paying part of one person's July pay outside the bank transfer does.
-
-Still the operator's call, because it decides two things: whether the bonus
-base for those two men is 5,000 short for FY2026-27, and whether the missing
-5,000 each was cash, an advance recovery, or something else that ought to be
-recorded rather than inferred.
+Four lines in the database were affected, all in July 2026 — the two advances
+above and 60,000 of TDS each against Mita Agarwal and Vandita More. All fall in
+FY2026-27, whose bonus has not been run, so no saved bonus changed.
 
 ## The attendance register independently confirms the pay import
 

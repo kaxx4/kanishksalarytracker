@@ -114,3 +114,22 @@ test('computeBonusRun sums annual wage, months counted, and totals across employ
   assert.equal(result.totals.cashTotal, result.lines[1].rounded)
   assert.equal(result.totals.grandTotal, result.lines[0].rounded + result.lines[1].rounded)
 })
+
+test('monthlyBonusWage adds back TDS and a recovered advance', () => {
+  // Sunil Kumar Tiwari, MKCP July 2026: an 18,000 wage of which 5,000 had
+  // already been advanced, so 13,000 reached the bank. The bonus follows the
+  // wage he earned, not the part of it that happened to arrive that month.
+  assert.equal(
+    monthlyBonusWage({ payable: 13000, ptax: 130, tiffin: 130, advance: 5000, tds: 0 }),
+    18000,
+  )
+  // Surajit Pal, CT the same month: 35,770 gross less 270 tiffin.
+  assert.equal(
+    monthlyBonusWage({ payable: 30620, ptax: 150, tiffin: 270, advance: 5000, tds: 0 }),
+    35500,
+  )
+  // TDS is withheld tax on wage already earned, so it counts the same way.
+  assert.equal(monthlyBonusWage({ payable: 40000, ptax: 200, tiffin: 0, tds: 60000 }), 100200)
+  // Omitting either is the same as it being nil, so old callers are unchanged.
+  assert.equal(monthlyBonusWage({ payable: 11373, ptax: 130, tiffin: 270 }), 11233)
+})
