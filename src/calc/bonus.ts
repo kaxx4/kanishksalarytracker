@@ -40,6 +40,20 @@ export function fyLabel(fyStartYear: number): string {
 }
 
 /**
+ * Whether someone belongs in the bonus run at all.
+ *
+ * Directors are outside it. The Payment of Bonus Act applies to employees, and
+ * a director drawing remuneration in a managerial capacity is not one.
+ *
+ * Deliberately *not* the Act's wage ceiling: this firm pays bonus above it —
+ * Surajit Pal on 35,500 has been paid one every year — so pay is not the line
+ * and testing it would quietly drop him. Being a director is the line.
+ */
+export function isBonusEligible(employee: { active: boolean; is_director: boolean }): boolean {
+  return employee.active && !employee.is_director
+}
+
+/**
  * Bonus-eligible wage for one saved payroll month.
  *
  * The Act counts what a person earned; `payable` is only what reached their

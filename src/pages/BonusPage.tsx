@@ -6,6 +6,7 @@ import {
   DEFAULT_BONUS_ROUND_RULE,
   fyLabel,
   fyMonths,
+  isBonusEligible,
   monthlyBonusWage,
   type BonusEmployeeInput,
 } from '../calc/bonus.ts'
@@ -50,7 +51,9 @@ export default function BonusPage() {
   const [confirmingOverwrite, setConfirmingOverwrite] = useState<null | { approve: boolean }>(null)
 
   const company = companies.find((c) => c.id === activeCompanyId)
-  const staff = useMemo(() => employees.filter((e) => e.active), [employees])
+  const staff = useMemo(() => employees.filter(isBonusEligible), [employees])
+  /* Named so their absence from the table below is explained, not just silent. */
+  const directors = useMemo(() => employees.filter((e) => e.active && e.is_director), [employees])
   const existing = bonusRuns.find((r) => r.fy_start_year === fyStartYear)
   const months = useMemo(() => fyMonths(fyStartYear), [fyStartYear])
 
@@ -449,6 +452,14 @@ export default function BonusPage() {
             {monthsInFy} of 12 months found from saved runs
           </span>
         </h2>
+
+        {directors.length > 0 && (
+          <p className="font-mono text-[0.625rem] leading-relaxed text-ink-3">
+            Not listed: {directors.map((d) => d.name).join(', ')} — the Payment of Bonus Act
+            covers employees, and a director drawing remuneration in a managerial capacity is
+            not one. Clear the director flag under Employees to bring someone into the run.
+          </p>
+        )}
 
         <div className="leaf overflow-x-auto">
           <table className="stack-sm w-full">

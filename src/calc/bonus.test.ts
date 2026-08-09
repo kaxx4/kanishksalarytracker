@@ -1,7 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { computeBonusLine, computeBonusRun, fyLabel, fyMonths, monthlyBonusWage } from './bonus.ts'
+import {
+  computeBonusLine,
+  computeBonusRun,
+  fyLabel,
+  fyMonths,
+  isBonusEligible,
+  monthlyBonusWage,
+} from './bonus.ts'
 
 test('fyMonths runs April through March', () => {
   const months = fyMonths(2024)
@@ -132,4 +139,16 @@ test('monthlyBonusWage adds back TDS and a recovered advance', () => {
   assert.equal(monthlyBonusWage({ payable: 40000, ptax: 200, tiffin: 0, tds: 60000 }), 100200)
   // Omitting either is the same as it being nil, so old callers are unchanged.
   assert.equal(monthlyBonusWage({ payable: 11373, ptax: 130, tiffin: 270 }), 11233)
+})
+
+test('isBonusEligible keeps staff and drops directors, whatever they are paid', () => {
+  const staff = { active: true, is_director: false }
+  const director = { active: true, is_director: true }
+  assert.equal(isBonusEligible(staff), true)
+  assert.equal(isBonusEligible(director), false)
+  // Surajit Pal is on 35,500, above the Act's ceiling, and is paid a bonus
+  // every year. Pay must not be what decides this.
+  assert.equal(isBonusEligible({ active: true, is_director: false }), true)
+  // Someone who has left is out regardless.
+  assert.equal(isBonusEligible({ active: false, is_director: false }), false)
 })
