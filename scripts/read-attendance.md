@@ -449,3 +449,71 @@ July register were removed, and the month now reads:
 27 marks each, eight people, no `paid_leave` remaining. Pay was untouched:
 July 2026 is a stored historical run with its own reconciled figures and
 nothing recomputes from attendance.
+
+## Why the two books disagreed on absence — resolved
+
+The daily register's `A` counts ran short of the pay register's absence figure,
+always in the same direction and roughly in proportion to how absent someone
+was. The cause is a rule the daily book structurally cannot express.
+
+**A weekly off is unpaid when the worker was absent on the working day both
+before and after it** — the "sandwich" rule. The daily register has a column
+for every working day and none for Sundays, so a Sunday lost this way leaves no
+mark in it; the pay register simply counts it as another absent day.
+
+Measured over all 120 employee-months of imported MKCP attendance:
+
+| Rule tested | Months matching the pay register |
+|---|---|
+| plain count of `A` marks | 92 |
+| **+ sandwiched weekly offs** | **102** |
+| + weekly offs with absence on *either* side | 94 |
+| + leave days | 84 |
+
+Implemented in `src/calc/attendance.ts` behind the per-company Settings toggle
+"A weekly off inside a stretch of absence", default off, on for MKCP. Only
+unmarked absence triggers it — approved paid leave either side of a Sunday
+leaves it paid, which is what the register shows. Weekly offs at the very start
+or end of a month are never charged, because the neighbouring working day is in
+an adjacent month that may not be loaded, and a figure that changed with what
+happened to be in memory would be worse than one that is merely conservative.
+
+### The 18 that remain, and who is right
+
+`scripts/reconcile-attendance.mjs` runs the shipped code over every month and
+uses the **reconciled gross as arbiter** — it is the one figure on a historical
+line that was checked against a signed bank letter, so it outranks both
+registers. Inverting the payroll formula recovers the absence count the money
+must have been built from.
+
+| The gross supports | Months |
+|---|---|
+| the pay register | 14 |
+| the daily book | 1 |
+| neither | 3 |
+
+So the residue is not a second rule — it is ordinary transcription drift
+between two hand-kept books, usually a day either way, and the pay register is
+the more reliable of the two.
+
+The three the gross supports neither of are worth an eye, because in each the
+pay register does not agree with *itself*:
+
+- **Upender Kumar, Dec 2025** — absence recorded as 0, but the gross of 1,452
+  against a 15,000 salary is three days' pay. He was absent almost the whole
+  month; the field was left blank. The daily book's 26 is close to the 28 the
+  money implies.
+- **Sunil Kumar Tiwari, Jun 2026** — absence recorded as 0, gross implies about
+  4, which is exactly what the daily book says. The 130 that stops it being
+  exact looks like a tiffin folded into gross without the tiffin column
+  being filled.
+- **Upender Kumar, Jan 2026** — register says 11 absent and 2 leave, the daily
+  book says 12, and the gross implies 9. Nothing reconciles this one.
+
+None of these change pay. All three are stored historical runs whose totals are
+already reconciled to their bank letters, and nothing recomputes from
+attendance. They are recorded here so the next person does not rediscover them.
+
+**Not corrected in place.** The pay register records *how many* days, never
+*which* days, so making the daily grid agree would mean inventing dates. The
+counts are left as transcribed and the disagreement is documented instead.

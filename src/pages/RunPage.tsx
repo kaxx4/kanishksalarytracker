@@ -85,10 +85,11 @@ export default function RunPage() {
       map[employee.id] = deriveAttendance(
         attendance, employee.id, year, month,
         (iso) => days.find((d) => d.iso === iso)?.isWorking ?? false,
+        { chargeSandwichedOffDays: company?.charge_sandwiched_off_days ?? false },
       )
     }
     return map
-  }, [staff, attendance, year, month, days])
+  }, [staff, attendance, year, month, days, company?.charge_sandwiched_off_days])
 
   /** Attendance-derived defaults, overridable per row. */
   const lineInputs: LineInput[] = useMemo(() => {

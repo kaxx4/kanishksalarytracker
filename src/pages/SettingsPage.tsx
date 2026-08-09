@@ -128,6 +128,34 @@ export default function SettingsPage() {
           </div>
 
           <div className="p-5">
+            <label className="label">A weekly off inside a stretch of absence</label>
+            <div className="flex gap-0">
+              {([false, true] as boolean[]).map((on) => (
+                <button
+                  key={String(on)}
+                  onClick={() => void save({ charge_sandwiched_off_days: on })}
+                  className={`-ml-px border px-4 py-2 font-mono text-[0.6875rem] uppercase
+                    tracking-[.13em] transition-colors first:ml-0 first:rounded-l-[3px]
+                    last:rounded-r-[3px] ${
+                      (company.charge_sandwiched_off_days ?? false) === on
+                        ? 'z-10 border-ink bg-ink text-paper-raised'
+                        : 'border-rule-strong bg-paper-raised text-ink-3 hover:text-ink'
+                    }`}
+                >
+                  {on ? 'Is unpaid' : 'Stays paid'}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 max-w-prose text-[0.8125rem] leading-relaxed text-ink-2">
+              The "sandwich" rule: a Sunday counts as absent when the worker was absent on the
+              working day both before and after it. The daily register has no column for a Sunday,
+              so it can never show this — which is why its absence totals ran short of the pay
+              register's for MKCP. Only unmarked absence triggers it; approved paid leave either
+              side of a Sunday leaves it paid. Months already approved are never recalculated.
+            </p>
+          </div>
+
+          <div className="p-5">
             <label className="label">Tiffin rate — per day present</label>
             <input
               className="input tnum w-32"

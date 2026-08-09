@@ -22,6 +22,8 @@ export interface Company {
   tiffin_rate: number
   pay_divisor_basis: DayBasis
   weekly_off_days: number[]
+  /** Charge a weekly off flanked by absence on both sides. See calc/attendance.ts. */
+  charge_sandwiched_off_days: boolean
   ptax_slabs: PtaxSlab[]
   min_neft_rows: number
   round_rule: RoundRule
