@@ -445,7 +445,7 @@ export default function BonusPage() {
         </h2>
 
         <div className="leaf overflow-x-auto">
-          <table className="w-full">
+          <table className="stack-sm w-full">
             <thead>
               <tr>
                 <th scope="col" className="th sticky left-0 z-10 bg-paper-raised">Employee</th>
@@ -471,7 +471,11 @@ export default function BonusPage() {
                 const byMonth = wageByMonth[line.employeeId] ?? {}
                 return (
                   <tr key={line.employeeId} className="transition-colors hover:bg-paper-sunk/60">
-                    <th scope="row" className="td sticky left-0 z-10 bg-paper-raised text-left font-medium">
+                    <th
+                      scope="row"
+                      data-label="Employee"
+                      className="td sticky left-0 z-10 bg-paper-raised text-left font-medium"
+                    >
                       {line.name}
                     </th>
                     {months.map((m) => {
@@ -479,8 +483,9 @@ export default function BonusPage() {
                       return (
                         <td
                           key={`${m.year}-${m.month}`}
+                          data-label={`${MONTH_NAMES[m.month - 1].slice(0, 3)} ${String(m.year).slice(2)}`}
                           className={`td tnum text-right ${
-                            wage === undefined ? 'text-ink-4' : 'text-ink-2'
+                            wage === undefined ? 'nil text-ink-4' : 'text-ink-2'
                           }`}
                           title={
                             wage === undefined
@@ -492,7 +497,7 @@ export default function BonusPage() {
                         </td>
                       )
                     })}
-                    <td className="td text-right">
+                    <td className="td text-right" data-label="Manual add-on">
                       <input
                         className="tnum w-[6.5rem] rounded-[2px] border border-transparent bg-transparent
                                    px-1.5 py-0.5 text-right text-sm transition-colors
@@ -506,9 +511,9 @@ export default function BonusPage() {
                         }
                       />
                     </td>
-                    <td className="td tnum text-right">{inr(line.annualWage, { paise: true })}</td>
-                    <td className="td tnum text-right text-[15px] font-semibold">{inr(line.rounded)}</td>
-                    <td className="td">
+                    <td className="td tnum text-right" data-label="Annual wage">{inr(line.annualWage, { paise: true })}</td>
+                    <td className="td tnum text-right text-[15px] font-semibold" data-label="Bonus">{inr(line.rounded)}</td>
+                    <td className="td" data-label="Mode">
                       <span
                         className="font-mono text-[0.625rem] uppercase tracking-[.1em] text-ink-3"
                         title="Change an employee's default pay mode under Employees"
@@ -522,11 +527,17 @@ export default function BonusPage() {
             </tbody>
             <tfoot>
               <tr className="rule-total">
-                <td className="td border-b-0 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3" colSpan={4}>
+                <td
+                  className="td border-b-0 font-mono text-[0.625rem] uppercase tracking-[.13em] text-ink-3"
+                  colSpan={months.length + 2}
+                >
                   Total
                 </td>
-                <td className="td tnum border-b-0 text-right">{inr(result.totals.annualWage, { paise: true })}</td>
-                <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink">
+                <td className="td tnum border-b-0 text-right" data-label="Annual wage">{inr(result.totals.annualWage, { paise: true })}</td>
+                <td
+                  className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink"
+                  data-label="Total bonus"
+                >
                   {inr(result.totals.grandTotal)}
                 </td>
                 <td className="td border-b-0" />

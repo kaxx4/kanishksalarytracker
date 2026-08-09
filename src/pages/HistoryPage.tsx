@@ -234,7 +234,7 @@ export default function HistoryPage() {
               </h2>
 
               <div className="leaf overflow-x-auto">
-                <table className="w-full">
+                <table className="stack-sm w-full">
                   <thead>
                     <tr>
                       <th className="th">Employee</th>
@@ -257,33 +257,36 @@ export default function HistoryPage() {
                           line.pay_mode === 'excluded' ? 'text-ink-4' : ''
                         }`}
                       >
-                        <td className="td font-medium">
+                        <td className="td font-medium" data-label="Employee">
                           {line.employee_name}
                           {line.pay_mode === 'excluded' && (
                             <span className="tag ml-2 text-ink-4">off run</span>
                           )}
                         </td>
-                        <td className="td tnum text-right text-ink-2">{inr(line.monthly_pay)}</td>
+                        <td className="td tnum text-right text-ink-2" data-label="Monthly pay">{inr(line.monthly_pay)}</td>
                         <td
+                          data-label="Absent"
                           className={`td tnum text-right ${
-                            line.absence ? 'text-vermillion' : 'text-ink-4'
+                            line.absence ? 'text-vermillion' : 'nil text-ink-4'
                           }`}
                         >
                           {line.absence || '—'}
                         </td>
-                        <td className="td tnum text-right text-ink-2">{line.leave_pay || '—'}</td>
-                        <td className="td tnum text-right text-ink-2">
+                        <td className={`td tnum text-right text-ink-2 ${line.leave_pay ? '' : 'nil'}`} data-label="Leave">
+                          {line.leave_pay || '—'}
+                        </td>
+                        <td className={`td tnum text-right text-ink-2 ${line.tiffin ? '' : 'nil'}`} data-label="Tiffin">
                           {line.tiffin ? inr(line.tiffin) : '—'}
                         </td>
-                        <td className="td tnum text-right">{inr(line.gross, { paise: true })}</td>
-                        <td className="td tnum text-right text-ink-2">{inr(line.ptax)}</td>
-                        <td className="td tnum text-right text-ink-2">
+                        <td className="td tnum text-right" data-label="Gross">{inr(line.gross, { paise: true })}</td>
+                        <td className="td tnum text-right text-ink-2" data-label="P-Tax">{inr(line.ptax)}</td>
+                        <td className={`td tnum text-right text-ink-2 ${line.tds ? '' : 'nil'}`} data-label="TDS">
                           {line.tds ? inr(line.tds) : '—'}
                         </td>
-                        <td className="td tnum text-right text-ink-2">
+                        <td className={`td tnum text-right text-ink-2 ${line.advance ? '' : 'nil'}`} data-label="Advance">
                           {line.advance ? inr(line.advance) : '—'}
                         </td>
-                        <td className="td tnum text-right text-[15px] font-semibold">
+                        <td className="td tnum text-right text-[15px] font-semibold" data-label="Paid">
                           {inr(line.rounded)}
                         </td>
                       </tr>
@@ -297,7 +300,10 @@ export default function HistoryPage() {
                       >
                         Transferred to bank
                       </td>
-                      <td className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink">
+                      <td
+                        className="td tnum border-b-0 text-right text-[15px] font-semibold text-ink"
+                        data-label="Transferred to bank"
+                      >
                         {inr(detail.run.neft_total)}
                       </td>
                     </tr>

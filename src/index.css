@@ -206,14 +206,21 @@
   @media (max-width: 640px) {
     .stack-sm,
     .stack-sm tbody,
+    .stack-sm tfoot,
     .stack-sm tr,
-    .stack-sm td {
+    .stack-sm td,
+    .stack-sm tbody th {
       display: block;
       width: 100%;
     }
 
     .stack-sm thead {
       display: none;
+    }
+
+    /* A column frozen against sideways scroll has nothing left to freeze. */
+    .stack-sm tbody th {
+      position: static;
     }
 
     .stack-sm tr {
@@ -235,12 +242,34 @@
     }
 
     /* The name leads the card rather than sitting in a labelled row. */
-    .stack-sm td[data-label='Employee'] {
-      @apply mb-1 justify-start border-b-[1.5px] border-rule-strong pb-2 text-left
-             font-display text-lg;
+    .stack-sm td[data-label='Employee'],
+    .stack-sm tbody th[data-label='Employee'] {
+      @apply mb-1 flex items-baseline justify-start border-0 border-b-[1.5px] border-rule-strong
+             px-0 pb-2 text-left font-display text-lg;
     }
-    .stack-sm td[data-label='Employee']::before {
+    .stack-sm td[data-label='Employee']::before,
+    .stack-sm tbody th[data-label='Employee']::before {
       content: none;
+    }
+
+    /*
+      A figure that isn't there — no absence, no advance, a month with no saved
+      run — prints an em dash across the page. Twelve of those in a bonus row
+      bury the two or three months that actually carry a wage, so on a phone the
+      dash rows drop out and only what happened is listed. Marked in the markup
+      rather than sniffed from the text, since only the caller knows the
+      difference between "nothing" and "zero".
+    */
+    .stack-sm td.nil {
+      display: none;
+    }
+
+    /* A cell with no label is a spanning one; its figures are labelled already. */
+    .stack-sm td:not([data-label])::before {
+      content: none;
+    }
+    .stack-sm tfoot td[colspan] {
+      display: none;
     }
 
     /* The figure being checked. */
