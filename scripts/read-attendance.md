@@ -427,3 +427,25 @@ An unmarked working day counts as present in this app. Omitting a row that
 cannot be verified would therefore show someone with heavy absence as having
 perfect attendance — a far larger error than a few missed cells. Rows are
 written as read, and every shortfall is named in the migration that carries it.
+
+## July 2026 — resolved: paper wins
+
+July held two sources. Rows written on 3-4 August, before the import, disagreed
+with the photographed register: Sunil Kumar Tiwari and Shatrudahan carried
+absences on days the paper shows present, and Ramnaresh and Shambhu carried a
+`paid_leave` status the register cannot express. The import's
+`on conflict do nothing` had preserved them, leaving the month a mixture.
+
+The operator decided the register is authoritative. Every July 2026 mark was
+rewritten to the paper, leftover Sunday rows and rows for anyone not on the
+July register were removed, and the month now reads:
+
+| Person | Absences | Days |
+|---|---|---|
+| Ramnaresh Bhagat | 8 | 1-4, 6-9 |
+| Shambhu Prasad Singh | 5 | 27-31 |
+| the other six | 0 | — |
+
+27 marks each, eight people, no `paid_leave` remaining. Pay was untouched:
+July 2026 is a stored historical run with its own reconciled figures and
+nothing recomputes from attendance.
