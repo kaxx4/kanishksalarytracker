@@ -28,6 +28,13 @@ export default function AttendancePage() {
   } = useStore()
   const [{ year, month }, setPeriod] = useState(currentMonth)
   const [confirmingClear, setConfirmingClear] = useState(false)
+  const [confirmingOffDay, setConfirmingOffDay] = useState<null | {
+    employeeId: string
+    employeeName: string
+    iso: string
+    label: string
+    next: AttendanceStatus
+  }>(null)
 
   /**
    * Drag-to-paint: mousedown on a cell decides the status (by the same
@@ -216,6 +223,24 @@ export default function AttendancePage() {
         />
       )}
 
+      {confirmingOffDay && (
+        <ConfirmDialog
+          title={`Mark a weekly off?`}
+          body={`${confirmingOffDay.employeeName} · ${confirmingOffDay.iso} is ${confirmingOffDay.label}. ` +
+            `Mark it ${ATTENDANCE_LABELS[confirmingOffDay.next]} anyway? This does not change the ` +
+            'working-day count, and payroll still treats the day as off unless the sandwich rule applies.'}
+          confirmLabel="Mark it"
+          tone="ink"
+          countdownSeconds={0}
+          onCancel={() => setConfirmingOffDay(null)}
+          onConfirm={() => {
+            const { employeeId, iso, next } = confirmingOffDay
+            void markCells([{ employeeId, iso }], next)
+            setConfirmingOffDay(null)
+          }}
+        />
+      )}
+
       {/*
         Frozen panes, as in a spreadsheet: the name stays pinned to the left and
         the running totals to the right, while the dates scroll between them.
@@ -278,8 +303,34 @@ export default function AttendancePage() {
 
                   {days.map((d) => {
                     if (!d.isWorking) {
+                      const status = statusAt(employee.id, d.iso)
+                      const mark = MARK[status]
+                      const untouched = status === 'present'
                       return (
-                        <td key={d.iso} className="hatch border-b border-rule p-0 opacity-40" />
+                        <td key={d.iso} className="hatch border-b border-rule p-0 opacity-70">
+                          <button
+                            onClick={() => {
+                              const next = CYCLE[(CYCLE.indexOf(status) + 1) % CYCLE.length]
+                              setConfirmingOffDay({
+                                employeeId: employee.id,
+                                employeeName: employee.name,
+                                iso: d.iso,
+                                label: d.isHoliday ? 'a holiday' : 'a weekly off',
+                                next,
+                              })
+                            }}
+                            title={`${employee.name} · ${d.iso} · ${d.isHoliday ? 'Holiday' : 'Weekly off'}${
+                              untouched ? '' : ` · marked ${ATTENDANCE_LABELS[status]}`
+                            }`}
+                            aria-label={`${employee.name}, ${d.day} ${MONTH_NAMES[month - 1]}, weekly off: ${
+                              ATTENDANCE_LABELS[status]
+                            }`}
+                            className={`day-cell w-full select-none font-mono text-[0.6875rem]
+                                        font-semibold opacity-90 transition-colors ${mark.cls}`}
+                          >
+                            <span aria-hidden="true">{untouched ? '' : mark.glyph}</span>
+                          </button>
+                        </td>
                       )
                     }
                     const status = statusAt(employee.id, d.iso)
