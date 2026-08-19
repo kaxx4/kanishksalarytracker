@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { AutosaveStatus } from '../components/AutosaveStatus.tsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
 import { computeMonth, type CompanySettings, type LineInput } from '../calc/payroll.ts'
 import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
@@ -58,11 +59,25 @@ export default function RunPage() {
     if (existing && (existing.status === 'approved' || existing.is_historical)) return
     const t = setTimeout(() => {
       setDirty(false)
-      void save(false)
+      void save(false).then((ok) => {
+        if (!ok) setDirty(true)
+      })
     }, 900)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, saving, entries, chequeNo, letterDateIso, existing])
+
+  // Warn before an edit that hasn't reached the debounce yet — or the network
+  // request it kicked off — is lost to a closed tab or a reload.
+  useEffect(() => {
+    if (!dirty && !saving) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty, saving])
 
   /*
    * Hydrate the cheque number and letter date from the month's saved run.
@@ -245,8 +260,8 @@ export default function RunPage() {
     void save(approve)
   }
 
-  async function save(approve: boolean) {
-    if (!company || !result) return
+  async function save(approve: boolean): Promise<boolean> {
+    if (!company || !result) return false
     setSaving(true)
     try {
       const { data: run, error } = await supabase
@@ -292,8 +307,10 @@ export default function RunPage() {
       await refreshRuns()
       setSavedAt(new Date().toLocaleTimeString('en-IN'))
       toast.ok(approve ? `${MONTH_NAMES[month - 1]} ${year} approved` : 'Draft saved')
+      return true
     } catch (err) {
       toast.fail(`Could not save: ${(err as Error).message}`)
+      return false
     } finally {
       setSaving(false)
     }
@@ -625,11 +642,7 @@ export default function RunPage() {
       <section className="rise space-y-2" style={{ animationDelay: '200ms' }}>
         <h2 className="rubric">
           <span>Issue</span>
-          {savedAt && (
-            <span className="ml-auto normal-case tracking-normal text-verdigris">
-              Saved {savedAt}
-            </span>
-          )}
+          <AutosaveStatus dirty={dirty} saving={saving} savedAt={savedAt} />
         </h2>
 
         <div className="leaf flex flex-wrap items-center gap-2 p-4">
