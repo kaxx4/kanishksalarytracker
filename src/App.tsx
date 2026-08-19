@@ -8,6 +8,7 @@ import EmployeesPage from './pages/EmployeesPage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
 import RunPage from './pages/RunPage.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
+import InstallPrompt from './components/InstallPrompt.tsx'
 
 type Tab = 'attendance' | 'run' | 'bonus' | 'history' | 'employees' | 'settings'
 
@@ -54,6 +55,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
+      <InstallPrompt />
       <Masthead />
       <TabBar tab={tab} onTab={setTab} />
       <ErrorRule />
