@@ -28,6 +28,7 @@ export default function RunPage() {
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [splits, setSplits] = useState<Record<number, number[]> | null>(null)
   const [confirmingOverwrite, setConfirmingOverwrite] = useState<null | { approve: boolean }>(null)
+  const [dirty, setDirty] = useState(false)
 
   const company = companies.find((c) => c.id === activeCompanyId)
   const staff = useMemo(() => employees.filter((e) => e.active), [employees])
@@ -38,7 +39,30 @@ export default function RunPage() {
     setEntries({})
     setSplits(null)
     setSavedAt(null)
+    setDirty(false)
   }, [year, month, activeCompanyId, loadAttendance])
+
+  /*
+   * Autosave: a draft month's figures reach every other device the moment
+   * they're changed here, the same way a daily-register mark does, rather
+   * than sitting local until someone remembers to press Save.
+   *
+   * Debounced so a run of keystrokes in one box becomes one write, not one
+   * per character. Skipped once a month is approved or came from a pay
+   * register — overwriting either of those silently is exactly the mistake
+   * the confirm-before-overwrite dialog exists to prevent, so those cases
+   * still wait for an explicit, confirmed Save.
+   */
+  useEffect(() => {
+    if (!dirty || saving) return
+    if (existing && (existing.status === 'approved' || existing.is_historical)) return
+    const t = setTimeout(() => {
+      setDirty(false)
+      void save(false)
+    }, 900)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, saving, entries, chequeNo, letterDateIso, existing])
 
   /*
    * Hydrate the cheque number and letter date from the month's saved run.
@@ -167,7 +191,8 @@ export default function RunPage() {
    * Seed a new override from what is currently on screen, so that editing (say)
    * the advance column does not silently reset an attendance-derived absence.
    */
-  const set = (id: string, patch: Partial<DraftEntry>) =>
+  const set = (id: string, patch: Partial<DraftEntry>) => {
+    setDirty(true)
     setEntries((prev) => {
       const existingOverride = prev[id]
       const employee = staff.find((e) => e.id === id)
@@ -182,6 +207,7 @@ export default function RunPage() {
       }
       return { ...prev, [id]: { ...base, ...patch } }
     })
+  }
 
   /** A cell is highlighted only when it actually differs from the register. */
   const isEdited = (employeeId: string, field: 'absence' | 'leavePay') => {
@@ -331,7 +357,10 @@ export default function RunPage() {
               <input
                 className="input tnum"
                 value={chequeNo}
-                onChange={(e) => setChequeNo(e.target.value)}
+                onChange={(e) => {
+                  setChequeNo(e.target.value)
+                  setDirty(true)
+                }}
                 placeholder="007068"
               />
             </Field>
@@ -341,7 +370,10 @@ export default function RunPage() {
                 className="input"
                 type="date"
                 value={letterDateIso}
-                onChange={(e) => setLetterDateIso(e.target.value)}
+                onChange={(e) => {
+                  setLetterDateIso(e.target.value)
+                  setDirty(true)
+                }}
               />
             </Field>
           </div>

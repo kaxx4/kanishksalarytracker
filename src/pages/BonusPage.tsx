@@ -49,6 +49,7 @@ export default function BonusPage() {
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [confirmingOverwrite, setConfirmingOverwrite] = useState<null | { approve: boolean }>(null)
+  const [dirty, setDirty] = useState(false)
 
   const company = companies.find((c) => c.id === activeCompanyId)
   const staff = useMemo(() => employees.filter(isBonusEligible), [employees])
@@ -68,12 +69,30 @@ export default function BonusPage() {
     setLetterDateIso(existing?.letter_date ?? todayIso())
   }, [existing?.id, fyStartYear, activeCompanyId])
 
+  /*
+   * Autosave, mirroring Month End: a manual add-on, cheque number, or letter
+   * date typed here reaches every other device without anyone pressing Save.
+   * Skipped once the year is approved or on record from a pay register, same
+   * as there — those still go through the confirm-before-overwrite dialog.
+   */
+  useEffect(() => {
+    if (!dirty || saving) return
+    if (existing && (existing.status === 'approved' || existing.is_historical)) return
+    const t = setTimeout(() => {
+      setDirty(false)
+      void save(false)
+    }, 900)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, saving, manualAddOn, chequeNo, letterDateIso, existing])
+
   // Pull the per-company/FY rate + round rule, and every saved payroll month's
   // bonus-eligible wage for the roster, whenever the company or FY changes.
   useEffect(() => {
     if (!company) return
     setManualAddOn({})
     setSavedAt(null)
+    setDirty(false)
 
     let cancelled = false
     async function load() {
@@ -520,12 +539,13 @@ export default function BonusPage() {
                                    px-1.5 py-0.5 text-right text-sm transition-colors
                                    hover:border-rule-strong focus:border-vermillion focus:bg-paper-raised"
                         value={manualAddOn[line.employeeId] ?? 0}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setDirty(true)
                           setManualAddOn((prev) => ({
                             ...prev,
                             [line.employeeId]: Number(e.target.value) || 0,
                           }))
-                        }
+                        }}
                       />
                     </td>
                     <td className="td tnum text-right" data-label="Annual wage">{inr(line.annualWage, { paise: true })}</td>
@@ -599,10 +619,25 @@ export default function BonusPage() {
 
         <div className="leaf flex flex-wrap items-center gap-2 p-4">
           <Field label="Cheque no.">
-            <input className="input tnum" value={chequeNo} onChange={(e) => setChequeNo(e.target.value)} />
+            <input
+              className="input tnum"
+              value={chequeNo}
+              onChange={(e) => {
+                setChequeNo(e.target.value)
+                setDirty(true)
+              }}
+            />
           </Field>
           <Field label="Letter / value date">
-            <input className="input" type="date" value={letterDateIso} onChange={(e) => setLetterDateIso(e.target.value)} />
+            <input
+              className="input"
+              type="date"
+              value={letterDateIso}
+              onChange={(e) => {
+                setLetterDateIso(e.target.value)
+                setDirty(true)
+              }}
+            />
           </Field>
 
           <span className="mx-1 h-5 w-px bg-rule" />
