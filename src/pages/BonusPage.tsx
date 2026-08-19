@@ -11,6 +11,7 @@ import {
   type BonusEmployeeInput,
 } from '../calc/bonus.ts'
 import { buildNeftRows, type PaymentInput } from '../calc/neft.ts'
+import { AutosaveStatus } from '../components/AutosaveStatus.tsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
 import type { RoundRule } from '../calc/payroll.ts'
 import { bonusNeftFileName, downloadNeftCsv, downloadNeftXls } from '../export/neftFile.ts'
@@ -80,11 +81,25 @@ export default function BonusPage() {
     if (existing && (existing.status === 'approved' || existing.is_historical)) return
     const t = setTimeout(() => {
       setDirty(false)
-      void save(false)
+      void save(false).then((ok) => {
+        if (!ok) setDirty(true)
+      })
     }, 900)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, saving, manualAddOn, chequeNo, letterDateIso, existing])
+
+  // Warn before an edit that hasn't reached the debounce yet — or the network
+  // request it kicked off — is lost to a closed tab or a reload.
+  useEffect(() => {
+    if (!dirty && !saving) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty, saving])
 
   // Pull the per-company/FY rate + round rule, and every saved payroll month's
   // bonus-eligible wage for the roster, whenever the company or FY changes.
@@ -275,8 +290,8 @@ export default function BonusPage() {
     void save(approve)
   }
 
-  async function save(approve: boolean) {
-    if (!company) return
+  async function save(approve: boolean): Promise<boolean> {
+    if (!company) return false
     setSaving(true)
     try {
       const { data: run, error } = await supabase
@@ -318,8 +333,10 @@ export default function BonusPage() {
       await refreshBonusRuns()
       setSavedAt(new Date().toLocaleTimeString('en-IN'))
       toast.ok(approve ? `${fyLabel(fyStartYear)} bonus approved` : 'Bonus draft saved')
+      return true
     } catch (err) {
       toast.fail(`Could not save: ${(err as Error).message}`)
+      return false
     } finally {
       setSaving(false)
     }
@@ -614,7 +631,7 @@ export default function BonusPage() {
       <section className="rise space-y-2" style={{ animationDelay: '200ms' }}>
         <h2 className="rubric">
           <span>Issue</span>
-          {savedAt && <span className="ml-auto normal-case tracking-normal text-verdigris">Saved {savedAt}</span>}
+          <AutosaveStatus dirty={dirty} saving={saving} savedAt={savedAt} />
         </h2>
 
         <div className="leaf flex flex-wrap items-center gap-2 p-4">
